@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap.ui.clients
+package com.pandoscorp.autosnap.ui.screens
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

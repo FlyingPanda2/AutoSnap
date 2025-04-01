@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap.ui.login
+package com.pandoscorp.autosnap.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.R
-import com.pandoscorp.autosnap.ScreenObject
+import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.theme.Blue
 import com.pandoscorp.autosnap.ui.theme.LightBlue
 

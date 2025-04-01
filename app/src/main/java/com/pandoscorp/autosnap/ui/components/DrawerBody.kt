@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap.ui.main_screen
+package com.pandoscorp.autosnap.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

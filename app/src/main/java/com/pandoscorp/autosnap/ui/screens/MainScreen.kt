@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap.ui.main_screen
+package com.pandoscorp.autosnap.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import com.pandoscorp.autosnap.ui.components.DrawerBody
+import com.pandoscorp.autosnap.ui.components.DrawerHeader
+import com.pandoscorp.autosnap.ui.components.TopAppBar
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,36 +37,37 @@ fun MainForm(navController: NavHostController) {
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            Column(
-                modifier = Modifier.fillMaxSize()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                NavController = navController,
+                menuOpenClose = menuOpenClose,
+            )
+        },
+        content = { padding ->
+
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.7f)
+                    ) {
+                        DrawerHeader()
+                        DrawerBody()
+                    }
+                }
+            ) {}
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
-                DrawerHeader()
-                DrawerBody()
+                Text(
+                    text = "Основной контент",
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    NavController = navController,
-                    menuOpenClose = menuOpenClose,
-                )
-            },
-            content = { padding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) {
-                    Text(
-                        text = "Основной контент",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-        )
-    }
+    )
 }

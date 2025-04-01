@@ -1,10 +1,9 @@
-package com.pandoscorp.autosnap.ui.main_screen
+package com.pandoscorp.autosnap.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -37,8 +35,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.pandoscorp.autosnap.R
-import com.pandoscorp.autosnap.ScreenObject
-import com.pandoscorp.autosnap.navigation.AppNavigation
+import com.pandoscorp.autosnap.navigation.ScreenObject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +56,7 @@ fun TopAppBar(NavController: NavHostController, menuOpenClose: () -> Unit) {
             userRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
-                        val name = snapshot.child("Name").value as? String ?: "Имя не найдено"
+                        val name = snapshot.child("username").value as? String ?: "Имя не найдено"
                         userName = name
                     } else {
                         userName = "Пользователь не найден"
@@ -90,7 +87,7 @@ fun TopAppBar(NavController: NavHostController, menuOpenClose: () -> Unit) {
                 }
             },
             actions = {
-                IconButton({ NavController.navigate(ScreenObject.ProfileScreen.route) }) {
+                IconButton({ NavController.navigate(ScreenObject.ProfileScreen.route + "/$userId") }) {
                     Image(
                         painter = painterResource(R.drawable.logo_without_text),
                         contentDescription = "",

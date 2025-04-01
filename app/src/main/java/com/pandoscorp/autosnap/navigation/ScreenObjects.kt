@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap
+package com.pandoscorp.autosnap.navigation
 
 sealed class ScreenObject(val route: String){
 

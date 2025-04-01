@@ -1,4 +1,4 @@
-package com.pandoscorp.autosnap.ui.login
+package com.pandoscorp.autosnap.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -18,6 +18,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,21 +32,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.pandoscorp.autosnap.ScreenObject
+import com.pandoscorp.autosnap.navigation.ScreenObject
+import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 
 @Composable
-fun LoginForm(NavController: NavHostController) {
+fun LoginForm(
+    navController: NavHostController,
+    authViewModel: AuthViewModel) {
 
-    val auth = remember { Firebase.auth }
-    var errorState = remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var checked by remember { mutableStateOf(false) }
+
+    val loginState by authViewModel.loginState.collectAsState()
+    val errorState by authViewModel.errorState.collectAsState()
+
+    LaunchedEffect(loginState) {
+        if (loginState.isNotEmpty()) {
+            if (loginState == "Вход выполнен успешно") {
+                navController.navigate(ScreenObject.MainScreen.route) {
+                    popUpTo(ScreenObject.LoginScreen.route) { inclusive = true }
+                }
+                authViewModel.clearStates()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -102,9 +118,9 @@ fun LoginForm(NavController: NavHostController) {
                 "Запомнить меня"
             )
         }
-        if (errorState.value.isNotEmpty()) {
+        if (errorState.isNotEmpty()) {
             Text(
-                text = errorState.value,
+                text = errorState,
                 color = Color.Red,
                 textAlign = TextAlign.Center
             )
@@ -114,18 +130,11 @@ fun LoginForm(NavController: NavHostController) {
 
         Button(
             onClick = {
-                SignIn(
-                    auth,
-                    email,
-                    password,
-                    NavController = NavController,
-                    onSignInSucsess = {
-                        Log.d("MyLog", "Sucsess")
-                    },
-                    onSignInFailure = { error ->
-                        errorState.value = error
-                    }
-                )
+                if (email.isBlank() || password.isBlank()) {
+                    authViewModel.setError("Email или пароль не должны быть пустыми!")
+                } else {
+                    authViewModel.loginUser(email, password)
+                }
             },
             modifier = Modifier
                 .width(210.dp)
@@ -139,7 +148,7 @@ fun LoginForm(NavController: NavHostController) {
             Text(
                 "Войти",
                 style = TextStyle(
-                    fontSize = 18.sp, // Изменяем размер шрифта
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -149,30 +158,11 @@ fun LoginForm(NavController: NavHostController) {
 
         Text(
             "У меня еще нет аккаунта",
-            modifier = Modifier.clickable { NavController.navigate(ScreenObject.RegScreen.route) }
+            modifier = Modifier.clickable {
+                navController.navigate(ScreenObject.RegScreen.route) {
+                    popUpTo(ScreenObject.LoginScreen.route){ inclusive = true }
+                }
+            }
         )
     }
-}
-
-private fun SignIn(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    NavController: NavHostController,
-    onSignInSucsess: () -> Unit,
-    onSignInFailure: (String) -> Unit
-) {
-    if (email.isBlank() || password.isBlank()) {
-        onSignInFailure("Email или пароль не должны быть пустыми!")
-        return
-    }
-    auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener {
-            if (it.isSuccessful) {
-                onSignInSucsess()
-                NavController.navigate(ScreenObject.MainScreen.route)
-            }
-        }.addOnFailureListener {
-            onSignInFailure(it.message ?: "Sign in error")
-        }
 }
