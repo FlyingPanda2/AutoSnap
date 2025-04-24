@@ -1,5 +1,7 @@
 package com.pandoscorp.autosnap.navigation
 
+import AddClientForm
+import AddClientViewModel
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -13,6 +15,7 @@ import com.pandoscorp.autosnap.ui.screens.RegistrationForm
 import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
+import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 
 
@@ -21,8 +24,9 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val userRepository = UserRepository()
     val authViewModel = AuthViewModel(userRepository)
+    val addClientViewModel = AddClientViewModel()
 
-    NavHost(navController = navController, startDestination = ScreenObject.RegScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
             MainForm(navController)
         }
@@ -38,6 +42,12 @@ fun AppNavigation() {
         composable(ScreenObject.ClientsScreen.route){
             ClientsForm(navController)
         }
+        composable(ScreenObject.SheduleScreen.route){
+            SheduleForm(navController)
+        }
+        composable(ScreenObject.AddClientScreen.route){
+            AddClientForm(navController, addClientViewModel)
+        }
         composable(ScreenObject.ProfileScreen.route + "/{userId}"){ backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             if(userId.isNotEmpty()){
@@ -49,3 +59,4 @@ fun AppNavigation() {
         }
     }
 }
+

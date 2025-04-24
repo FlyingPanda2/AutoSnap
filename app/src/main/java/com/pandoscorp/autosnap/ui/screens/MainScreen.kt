@@ -1,7 +1,9 @@
 package com.pandoscorp.autosnap.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,9 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.ui.components.DrawerBody
-import com.pandoscorp.autosnap.ui.components.DrawerHeader
 import com.pandoscorp.autosnap.ui.components.TopAppBar
 import kotlinx.coroutines.launch
 
@@ -36,7 +39,6 @@ fun MainForm(navController: NavHostController) {
             }
         }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -48,12 +50,15 @@ fun MainForm(navController: NavHostController) {
 
             ModalNavigationDrawer(
                 drawerState = drawerState,
+                modifier = Modifier.padding(top = 65.dp),
                 drawerContent = {
                     Column(
-                        modifier = Modifier.fillMaxWidth(0.7f)
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .fillMaxHeight(1f)
+                            .background(Color.DarkGray)
                     ) {
-                        DrawerHeader()
-                        DrawerBody()
+                        DrawerBody(navController)
                     }
                 }
             ) {}

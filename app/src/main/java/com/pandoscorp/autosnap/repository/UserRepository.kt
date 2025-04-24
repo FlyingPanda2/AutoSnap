@@ -6,7 +6,6 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.pandoscorp.autosnap.model.User
 import kotlinx.coroutines.tasks.await
-import kotlin.runCatching
 
 class UserRepository {
 
@@ -18,16 +17,16 @@ class UserRepository {
 
     //Регистрация пользователя
     suspend fun registerUser(user: User, password: String): String {
-        try{
+        try {
             auth.createUserWithEmailAndPassword(user.email, password)
 
             val userId = auth.currentUser?.uid
-            if(userId != null){
+            if (userId != null) {
                 user.id = userId
                 userRef.child(userId).setValue(user).await()
             }
             return "Пользователь успешно зарегистрирован"
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.e("UserRepository", "Ошибка регистрации: ${e.message}", e)
             return "Ошибка регистрации: ${e.message}"
         }
@@ -38,7 +37,7 @@ class UserRepository {
         try {
             auth.signInWithEmailAndPassword(email, password).await()
             return "Вход выполнен успешно"
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.e("UserRepository", "Ошибка входа: ${e.message}", e)
             return "Ошибка входа: ${e.message}"
         }

@@ -42,7 +42,8 @@ import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 @Composable
 fun LoginForm(
     navController: NavHostController,
-    authViewModel: AuthViewModel) {
+    authViewModel: AuthViewModel
+) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -83,7 +84,7 @@ fun LoginForm(
 
 
         OutlinedTextField(
-            value = email,
+            value = "assd1994@bk.ru",
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier
@@ -94,7 +95,7 @@ fun LoginForm(
         )
 
         OutlinedTextField(
-            value = password,
+            value = "123456789",
             onValueChange = { password = it },
             label = { Text("Пароль") },
             modifier = Modifier

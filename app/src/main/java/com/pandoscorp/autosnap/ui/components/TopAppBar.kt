@@ -1,5 +1,6 @@
 package com.pandoscorp.autosnap.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -53,6 +54,7 @@ fun TopAppBar(NavController: NavHostController, menuOpenClose: () -> Unit) {
         val userRef: DatabaseReference = database.getReference("users").child(userId)
 
         LaunchedEffect(userId) {
+            Log.d("LOG", userId)
             userRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
