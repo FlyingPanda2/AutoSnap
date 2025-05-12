@@ -61,6 +61,7 @@ fun AddClientForm(
                     IconButton(onClick = {
                         viewModel.saveClientToFirebase()
                         navController.popBackStack()
+                        viewModel.clearState()
                     }) {
                         Icon(
                             Icons.Filled.Check,
@@ -122,6 +123,18 @@ fun AddClientForm(
                         label = { Text("Телефон") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    )
+                }
+
+                item{Spacer(modifier = Modifier.height(8.dp))}
+
+                item{
+                    OutlinedTextField(
+                        value = userState.note,
+                        onValueChange = { viewModel.updateField("note", it) },
+                        label = { Text("Заметка") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                     )
                 }
 
@@ -239,8 +252,8 @@ fun AddClientForm(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .border(
-                                        width = 3.dp, // Толщина обводки
-                                        color = Color.Black, // Цвет обводки
+                                        width = 3.dp,
+                                        color = Color.Black,
                                         shape = RectangleShape
                                     )
                                     .padding(15.dp),

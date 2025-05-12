@@ -10,4 +10,6 @@ sealed class ScreenObject(val route: String) {
     object ClientsScreen : ScreenObject("ClientsForm")
     object AddClientScreen : ScreenObject("AddClientForm")
     object SheduleScreen : ScreenObject("SheduleForm")
+    object ChatScreen : ScreenObject("ChatForm")
+
 }

@@ -104,7 +104,7 @@ fun DrawerBody(navController: NavHostController) {
                 .fillMaxWidth()
                 .height(60.dp)
                 .shadow(2.dp, shape = RectangleShape)
-                .clickable {  },
+                .clickable { navController.navigate(ScreenObject.ChatScreen.route) },
             contentAlignment = Alignment.CenterStart
         ){
             Row(

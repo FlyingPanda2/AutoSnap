@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.pandoscorp.autosnap.repository.UserRepository
+import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
 import com.pandoscorp.autosnap.ui.screens.RegistrationForm
@@ -17,6 +19,7 @@ import com.pandoscorp.autosnap.ui.screens.MainForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
 
 
 @Composable
@@ -25,6 +28,7 @@ fun AppNavigation() {
     val userRepository = UserRepository()
     val authViewModel = AuthViewModel(userRepository)
     val addClientViewModel = AddClientViewModel()
+    val clientViewModel = ClientsViewModel()
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
@@ -40,7 +44,7 @@ fun AppNavigation() {
             WelcomeForm(navController)
         }
         composable(ScreenObject.ClientsScreen.route){
-            ClientsForm(navController)
+            ClientsForm(navController, clientViewModel)
         }
         composable(ScreenObject.SheduleScreen.route){
             SheduleForm(navController)
@@ -56,6 +60,11 @@ fun AppNavigation() {
             else{
                 Text("Пользователь не найден")
             }
+        }
+        composable(ScreenObject.ChatScreen.route + "chat/{shopId}") { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            ChatForm()
         }
     }
 }
