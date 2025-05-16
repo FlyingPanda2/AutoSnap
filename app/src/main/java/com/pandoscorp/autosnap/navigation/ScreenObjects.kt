@@ -12,6 +12,9 @@ sealed class ScreenObject(val route: String) {
     object SheduleScreen : ScreenObject("SheduleForm")
     object ChatScreen : ScreenObject("ChatForm")
     object NewAppointmentScreen : ScreenObject("NewAppointmentForm")
+    object ClientCarsScreen : ScreenObject("ClientCarsForm")
+    object ServiceChooseScreen : ScreenObject("ServiceChooseForm")
+    object AddServiceScreen : ScreenObject("AddServiceForm")
 
     data class ClientsForSelection(val forSelection: Boolean = true) : ScreenObject(
         route = "clients?forSelection=$forSelection"

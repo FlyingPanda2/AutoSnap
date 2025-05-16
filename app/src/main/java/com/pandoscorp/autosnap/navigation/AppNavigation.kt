@@ -11,7 +11,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.pandoscorp.autosnap.repository.UserRepository
+import com.pandoscorp.autosnap.ui.screens.AddServiceForm
 import com.pandoscorp.autosnap.ui.screens.ChatForm
+import com.pandoscorp.autosnap.ui.screens.ClientCarsForm
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
 import com.pandoscorp.autosnap.ui.screens.RegistrationForm
@@ -19,6 +21,7 @@ import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
 import com.pandoscorp.autosnap.ui.screens.NewAppointmentForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
+import com.pandoscorp.autosnap.ui.screens.ServiceChooseForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
@@ -83,7 +86,23 @@ fun AppNavigation() {
             ChatForm()
         }
         composable(ScreenObject.NewAppointmentScreen.route){
-            NewAppointmentForm(navController, sharedViewModel = SharedViewModel())
+            NewAppointmentForm(navController, sharedViewModel)
+        }
+        composable(ScreenObject.ServiceChooseScreen.route){
+            ServiceChooseForm(navController)
+        }
+        composable(ScreenObject.AddServiceScreen.route){
+            AddServiceForm(navController)
+        }
+
+        composable(ScreenObject.ClientCarsScreen.route) {
+            ClientCarsForm(
+                navController = navController,
+                sharedViewModel = sharedViewModel,
+                onCarSelected = { car ->
+                    sharedViewModel.selectCar(car)
+                }
+            )
         }
 
 

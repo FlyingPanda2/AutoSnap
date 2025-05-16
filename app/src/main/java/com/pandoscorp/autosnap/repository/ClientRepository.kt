@@ -30,4 +30,12 @@ class ClientRepository {
             onError("Ошибка загрузки клиентов: ${it.message}")
         }
     }
+
+    fun getClientWithCars(
+        clientId: String,
+        onSuccess: (Client) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        // Реализация загрузки клиента с автомобилями из Firebase/Firestore
+    }
 }
