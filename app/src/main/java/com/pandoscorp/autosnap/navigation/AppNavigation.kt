@@ -22,6 +22,7 @@ import com.pandoscorp.autosnap.ui.screens.ProfileForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 
 
@@ -33,6 +34,7 @@ fun AppNavigation() {
     val addClientViewModel = AddClientViewModel()
     val clientViewModel = ClientsViewModel()
     val sheduleViewModel = SheduleViewModel()
+    val sharedViewModel = SharedViewModel()
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
@@ -48,23 +50,17 @@ fun AppNavigation() {
             WelcomeForm(navController)
         }
         composable(ScreenObject.ClientsScreen.route){
+            ClientsForm(navController, clientViewModel)
+        }
+        composable("clients/selection") {
             ClientsForm(
                 navController = navController,
                 viewModel = clientViewModel,
-                forSelection = false
-            )
-        }
-        composable(
-            route = ScreenObject.ClientsForSelection.createRoute(forSelection = false), // Базовый маршрут
-            arguments = listOf(
-                navArgument("forSelection") {
-                    type = NavType.BoolType
-                    defaultValue = true
+                forSelection = true,
+                onClientSelected = { client ->
+                    sharedViewModel.selectClient(client)
                 }
             )
-        ) { backStackEntry ->
-            val forSelection = backStackEntry.arguments?.getBoolean("forSelection") ?: true
-            ClientsForm(navController, clientViewModel, forSelection = forSelection)
         }
         composable(ScreenObject.SheduleScreen.route){
             SheduleForm(navController, sheduleViewModel)
@@ -87,7 +83,7 @@ fun AppNavigation() {
             ChatForm()
         }
         composable(ScreenObject.NewAppointmentScreen.route){
-            NewAppointmentForm(navController)
+            NewAppointmentForm(navController, sharedViewModel = SharedViewModel())
         }
 
 

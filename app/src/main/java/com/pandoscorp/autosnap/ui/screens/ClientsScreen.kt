@@ -39,13 +39,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.pandoscorp.autosnap.model.Client
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsForm(
     navController: NavHostController,
     viewModel: ClientsViewModel,
-    forSelection: Boolean = true
+    forSelection: Boolean = false,
+    onClientSelected: (Client) -> Unit = {}
 ) {
     val clients by viewModel.clients.collectAsState()
 
@@ -98,9 +100,7 @@ fun ClientsForm(
                                 .padding(vertical = 8.dp)
                                 .clickable {
                                     if (forSelection) {
-                                        navController.previousBackStackEntry
-                                            ?.savedStateHandle
-                                            ?.set("selected_client", client)
+                                        onClientSelected(client)
                                         navController.popBackStack()
                                     }
                                 }
