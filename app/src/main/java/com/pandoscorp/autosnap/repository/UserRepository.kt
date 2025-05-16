@@ -4,6 +4,8 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.GenericTypeIndicator
+import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.model.User
 import kotlinx.coroutines.tasks.await
 
@@ -77,6 +79,34 @@ class UserRepository {
         } catch (e: Exception) {
             Log.e("UserRepository", "Ошибка обновления данных пользователя: ${e.message}", e)
             return "Ошибка обновления данных пользователя: ${e.message}"
+        }
+    }
+
+    suspend fun getUserServices(userId: String): Map<String, Service> {
+        return try {
+            val snapshot = userRef.child(userId).child("services").get().await()
+            snapshot.getValue(object : GenericTypeIndicator<Map<String, Service>>() {})
+                ?: emptyMap()
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error getting services", e)
+            emptyMap()
+        }
+    }
+
+    suspend fun addUserService(userId: String, service: Service): Boolean {
+        return try {
+            val serviceKey = userRef.child(userId).child("services").push().key
+                ?: return false
+
+            userRef.child(userId)
+                .child("services")
+                .child(serviceKey)
+                .setValue(service)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error adding service", e)
+            false
         }
     }
 }

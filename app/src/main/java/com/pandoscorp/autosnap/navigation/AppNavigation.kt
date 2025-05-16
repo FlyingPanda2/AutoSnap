@@ -23,6 +23,7 @@ import com.pandoscorp.autosnap.ui.screens.NewAppointmentForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
 import com.pandoscorp.autosnap.ui.screens.ServiceChooseForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
+import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
@@ -31,6 +32,7 @@ import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 
 @Composable
 fun AppNavigation() {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
     val navController = rememberNavController()
     val userRepository = UserRepository()
     val authViewModel = AuthViewModel(userRepository)
@@ -38,6 +40,8 @@ fun AppNavigation() {
     val clientViewModel = ClientsViewModel()
     val sheduleViewModel = SheduleViewModel()
     val sharedViewModel = SharedViewModel()
+    val addServiceViewModel = AddServiceViewModel()
+
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
@@ -92,7 +96,9 @@ fun AppNavigation() {
             ServiceChooseForm(navController)
         }
         composable(ScreenObject.AddServiceScreen.route){
-            AddServiceForm(navController)
+            if(userId != null){
+                AddServiceForm(navController, userId, addServiceViewModel)
+            }
         }
 
         composable(ScreenObject.ClientCarsScreen.route) {

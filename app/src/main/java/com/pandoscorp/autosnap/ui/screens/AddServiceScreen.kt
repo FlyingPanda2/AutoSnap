@@ -1,41 +1,46 @@
 ﻿package com.pandoscorp.autosnap.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import com.pandoscorp.autosnap.R
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import com.pandoscorp.autosnap.model.Service
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddServiceForm(
-    navController: NavHostController
+    navController: NavHostController,
+    userId: String,
+    viewModel: AddServiceViewModel = viewModel()
 ) {
+    var serviceName by remember { mutableStateOf("") }
+    var serviceDuration by remember { mutableStateOf("") }
+    var servicePrice by remember { mutableStateOf("") }
+    var serviceDescription by remember { mutableStateOf("") }
 
-    var serviceName by remember {mutableStateOf("")}
-    var serviceLong by remember {mutableStateOf("")}
-    var servicePrice by remember {mutableStateOf("")}
-    var serviceDescription by remember {mutableStateOf("")}
 
     Scaffold(
         topBar = {
@@ -47,13 +52,29 @@ fun AddServiceForm(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(
+                        onClick = {
+                            if (serviceName.isNotBlank()) {
+                                val service = Service(
+                                    name = serviceName,
+                                    duration = serviceDuration.toIntOrNull() ?: 0,
+                                    price = servicePrice.toIntOrNull() ?: 0,
+                                    description = serviceDescription
+                                )
+                                viewModel.addServiceToUser(userId, service) { success ->
+                                    if (success) {
+                                        navController.popBackStack()
+                                    }
+                                }
+                            }
+                        },
+                    ) {
                         Icon(
                             Icons.Filled.Check,
                             contentDescription = "Done"
                         )
                     }
-                },
+                }
             )
         },
         content = { paddingValues ->
@@ -65,37 +86,45 @@ fun AddServiceForm(
                 OutlinedTextField(
                     value = serviceName,
                     onValueChange = { serviceName = it },
-                    label = { Text("Название") },
+                    label = { Text("Название*") },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth(),
+                    singleLine = true
                 )
+
                 OutlinedTextField(
-                    value = serviceLong,
-                    onValueChange = { serviceName = it },
-                    label = { Text("Длительность") },
+                    value = serviceDuration,
+                    onValueChange = { serviceDuration = it.filter { c -> c.isDigit() } },
+                    label = { Text("Длительность (минуты)") },
                     modifier = Modifier
                         .padding(8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
                 )
+
                 OutlinedTextField(
                     value = servicePrice,
-                    onValueChange = { serviceName = it },
-                    label = { Text("Стоимость") },
+                    onValueChange = { servicePrice = it.filter { c -> c.isDigit() } },
+                    label = { Text("Стоимость (руб)") },
                     modifier = Modifier
                         .padding(8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
                 )
+
                 OutlinedTextField(
                     value = serviceDescription,
-                    onValueChange = { serviceName = it },
+                    onValueChange = { serviceDescription = it },
                     label = { Text("Описание") },
                     modifier = Modifier
                         .padding(8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    maxLines = 3
                 )
             }
         }
     )
-
 }
