@@ -11,5 +11,15 @@ sealed class ScreenObject(val route: String) {
     object AddClientScreen : ScreenObject("AddClientForm")
     object SheduleScreen : ScreenObject("SheduleForm")
     object ChatScreen : ScreenObject("ChatForm")
+    object NewAppointmentScreen : ScreenObject("NewAppointmentForm")
+
+    data class ClientsForSelection(val forSelection: Boolean = true) : ScreenObject(
+        route = "clients?forSelection=$forSelection"
+    ) {
+        companion object {
+            // Альтернативный способ создания маршрута
+            fun createRoute(forSelection: Boolean) = "clients?forSelection=$forSelection"
+        }
+    }
 
 }

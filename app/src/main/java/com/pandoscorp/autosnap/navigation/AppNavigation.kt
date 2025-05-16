@@ -4,11 +4,12 @@ import AddClientForm
 import AddClientViewModel
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
 import com.pandoscorp.autosnap.repository.UserRepository
 import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
@@ -16,10 +17,12 @@ import com.pandoscorp.autosnap.ui.screens.LoginForm
 import com.pandoscorp.autosnap.ui.screens.RegistrationForm
 import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
+import com.pandoscorp.autosnap.ui.screens.NewAppointmentForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 
 
 @Composable
@@ -29,6 +32,7 @@ fun AppNavigation() {
     val authViewModel = AuthViewModel(userRepository)
     val addClientViewModel = AddClientViewModel()
     val clientViewModel = ClientsViewModel()
+    val sheduleViewModel = SheduleViewModel()
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
@@ -44,10 +48,26 @@ fun AppNavigation() {
             WelcomeForm(navController)
         }
         composable(ScreenObject.ClientsScreen.route){
-            ClientsForm(navController, clientViewModel)
+            ClientsForm(
+                navController = navController,
+                viewModel = clientViewModel,
+                forSelection = false
+            )
+        }
+        composable(
+            route = ScreenObject.ClientsForSelection.createRoute(forSelection = false), // Базовый маршрут
+            arguments = listOf(
+                navArgument("forSelection") {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
+            )
+        ) { backStackEntry ->
+            val forSelection = backStackEntry.arguments?.getBoolean("forSelection") ?: true
+            ClientsForm(navController, clientViewModel, forSelection = forSelection)
         }
         composable(ScreenObject.SheduleScreen.route){
-            SheduleForm(navController)
+            SheduleForm(navController, sheduleViewModel)
         }
         composable(ScreenObject.AddClientScreen.route){
             AddClientForm(navController, addClientViewModel)
@@ -66,6 +86,11 @@ fun AppNavigation() {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
             ChatForm()
         }
+        composable(ScreenObject.NewAppointmentScreen.route){
+            NewAppointmentForm(navController)
+        }
+
+
     }
 }
 

@@ -42,7 +42,11 @@ import androidx.compose.foundation.layout.size
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClientsForm(navController: NavHostController, viewModel: ClientsViewModel) {
+fun ClientsForm(
+    navController: NavHostController,
+    viewModel: ClientsViewModel,
+    forSelection: Boolean = true
+) {
     val clients by viewModel.clients.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -92,6 +96,14 @@ fun ClientsForm(navController: NavHostController, viewModel: ClientsViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp)
+                                .clickable {
+                                    if (forSelection) {
+                                        navController.previousBackStackEntry
+                                            ?.savedStateHandle
+                                            ?.set("selected_client", client)
+                                        navController.popBackStack()
+                                    }
+                                }
                         ) {
                             Text(
                                 text = "${client.name} ${client.surname}",
