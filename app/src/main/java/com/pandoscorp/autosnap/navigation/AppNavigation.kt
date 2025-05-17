@@ -46,7 +46,7 @@ fun AppNavigation() {
 
 
 
-    NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.ServiceChooseScreen.route) {
         composable(ScreenObject.MainScreen.route){
             MainForm(navController)
         }
@@ -96,7 +96,7 @@ fun AppNavigation() {
             NewAppointmentForm(navController, sharedViewModel)
         }
         composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController, serviceViewModel, sharedViewModel)
+            ServiceChooseForm(navController, serviceViewModel)
         }
         composable(ScreenObject.AddServiceScreen.route){
             if(userId != null){

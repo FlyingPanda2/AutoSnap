@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.sharp.KeyboardArrowRight
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -146,12 +147,12 @@ fun ServiceChooseForm(
                     )
                 }
                 LazyColumn(
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(2.dp)
                 ) {
                     items(services) { service ->
                         ServiceItem(
                             service = service,
-                            onClick = {}
+                            onClick = { /* обработка выбора */ }
                         )
                     }
                 }
@@ -207,7 +208,8 @@ fun ServiceItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardColors(containerColor = Color.White, contentColor = Color.Black, disabledContentColor = Color.White, disabledContainerColor = Color.White),
         onClick = onClick
     ) {
         Column(
@@ -215,9 +217,9 @@ fun ServiceItem(
         ) {
             Text(
                 text = service.name,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text("Цена: ${service.price} ₽")
             Text("Длительность: ${service.duration} мин")
             Text("Описание: ${service.description}")
