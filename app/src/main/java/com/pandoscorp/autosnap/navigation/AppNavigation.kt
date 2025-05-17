@@ -26,6 +26,7 @@ import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 
@@ -41,6 +42,8 @@ fun AppNavigation() {
     val sheduleViewModel = SheduleViewModel()
     val sharedViewModel = SharedViewModel()
     val addServiceViewModel = AddServiceViewModel()
+    val serviceViewModel = ServiceViewModel()
+
 
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
@@ -93,7 +96,7 @@ fun AppNavigation() {
             NewAppointmentForm(navController, sharedViewModel)
         }
         composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController)
+            ServiceChooseForm(navController, serviceViewModel, sharedViewModel)
         }
         composable(ScreenObject.AddServiceScreen.route){
             if(userId != null){
