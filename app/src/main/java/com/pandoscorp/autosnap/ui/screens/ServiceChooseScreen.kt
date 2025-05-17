@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.sharp.KeyboardArrowRight
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,8 +59,7 @@ import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 @Composable
 fun ServiceChooseForm(
     navController: NavHostController,
-    serviceViewModel: ServiceViewModel,
-    sharedViewModel: SharedViewModel
+    serviceViewModel: ServiceViewModel
 ) {
     var isChecked by remember { mutableStateOf(false) }
 
@@ -151,7 +151,7 @@ fun ServiceChooseForm(
                     items(services) { service ->
                         ServiceItem(
                             service = service,
-                            onSelect = { sharedViewModel.addService(service) }
+                            onClick = {}
                         )
                     }
                 }
@@ -199,18 +199,28 @@ fun AnimatedCircularCheckbox(
 }
 
 @Composable
-fun ServiceItem(service: Service, onSelect: () -> Unit) {
+fun ServiceItem(
+    service: Service,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable(onClick = onSelect)
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = service.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "Цена: ${service.price} руб.")
-            Text(text = "Длительность: ${service.duration} мин")
-            Text(text = "Описание: ${service.description}")
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = service.name,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Цена: ${service.price} ₽")
+            Text("Длительность: ${service.duration} мин")
+            Text("Описание: ${service.description}")
         }
     }
 }

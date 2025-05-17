@@ -8,16 +8,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class ServiceViewModel(
-    private val repository: ServiceRepository = ServiceRepository()
-) : ViewModel() {
+class ServiceViewModel : ViewModel() {
+    private val repository = ServiceRepository()
     private val _services = MutableStateFlow<List<Service>>(emptyList())
     val services: StateFlow<List<Service>> = _services
 
-    fun loadUserServices(userId: String) {
+    init {
+        loadServices()
+    }
+
+    fun loadServices() {
         viewModelScope.launch {
-            repository.getUserServices(userId).collect { services ->
-                _services.value = services
+            repository.getAllServices().collect {
+                _services.value = it
             }
         }
     }
