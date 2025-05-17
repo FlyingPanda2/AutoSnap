@@ -4,12 +4,16 @@ import AddClientForm
 import AddClientViewModel
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
+import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.repository.UserRepository
 import com.pandoscorp.autosnap.ui.screens.AddServiceForm
 import com.pandoscorp.autosnap.ui.screens.ChatForm
@@ -43,6 +47,12 @@ fun AppNavigation() {
     val sharedViewModel = SharedViewModel()
     val addServiceViewModel = AddServiceViewModel()
     val serviceViewModel = ServiceViewModel()
+
+    val currentUser by produceState<User?>(initialValue = null) {
+        if (userId != null) {
+            value = userRepository.getUserById(userId)
+        }
+    }
 
 
 
@@ -96,7 +106,7 @@ fun AppNavigation() {
             NewAppointmentForm(navController, sharedViewModel)
         }
         composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController, serviceViewModel)
+            ServiceChooseForm(navController, serviceViewModel, currentUser)
         }
         composable(ScreenObject.AddServiceScreen.route){
             if(userId != null){

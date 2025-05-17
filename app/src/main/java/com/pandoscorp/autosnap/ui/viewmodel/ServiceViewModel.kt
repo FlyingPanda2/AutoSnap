@@ -18,6 +18,16 @@ class ServiceViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    fun toggleServiceSelection(serviceId: String) {
+        _services.value = _services.value.map { service ->
+            if (service.id == serviceId) {
+                service.copy(isSelected = !service.isSelected)
+            } else {
+                service
+            }
+        }
+    }
+
     init {
         loadServices()
     }

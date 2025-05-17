@@ -6,4 +6,5 @@ data class Service(
     val description: String = "",
     val price: Int = 0,
     val duration: Int = 0,
+    var isSelected: Boolean = false
 )
