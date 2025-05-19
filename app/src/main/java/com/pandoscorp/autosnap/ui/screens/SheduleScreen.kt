@@ -43,28 +43,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.navigation.ScreenObject
+import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.CalendarView
-import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
-import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.getMonthName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SheduleForm(
     navController: NavHostController,
-    viewModel: SheduleViewModel,
-    sharedViewModel: SharedViewModel,
+    viewModel: AppointmentSharedViewModel,
     forDateSelection: Boolean = false
 ) {
     val state by viewModel.state.collectAsState()
 
-    val selectedDate by sharedViewModel.selectedDate.collectAsState()
+    val selectedDate by viewModel.selectedDate.collectAsState()
 
     Scaffold(
         topBar = {

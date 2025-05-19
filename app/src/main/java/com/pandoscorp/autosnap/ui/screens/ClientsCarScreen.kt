@@ -27,17 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.model.Car
-import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 
 // ui/screens/ClientCarsScreen.kt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientCarsForm(
     navController: NavHostController,
-    sharedViewModel: SharedViewModel,
+    appointmentSharedViewModel: AppointmentSharedViewModel,
     onCarSelected: (Car) -> Unit = {}
 ) {
-    val selectedClient by sharedViewModel.selectedClient.collectAsState()
+    val selectedClient by appointmentSharedViewModel.selectedClient.collectAsState()
     val cars = selectedClient?.cars ?: emptyList()
 
     Scaffold(

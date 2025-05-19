@@ -1,16 +1,16 @@
 ﻿package com.pandoscorp.autosnap.ui.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.ViewModel
 import com.pandoscorp.autosnap.model.Car
 import com.pandoscorp.autosnap.model.Client
 import com.pandoscorp.autosnap.model.Service
+import com.pandoscorp.autosnap.model.SimpleDate
+import com.pandoscorp.autosnap.utilis.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Date
 
-class SharedViewModel : ViewModel() {
+class AppointmentSharedViewModel {
     private val _selectedClient = MutableStateFlow<Client?>(null)
     val selectedClient: StateFlow<Client?> = _selectedClient
 
@@ -49,4 +49,35 @@ class SharedViewModel : ViewModel() {
     fun selectCar(car: Car) {
         _selectedCar.value = car
     }
+
+    private val currentDate = DateUtils.getCurrentDate()
+
+    private val _state = MutableStateFlow(
+        ScheduleState(
+            selectedDate = currentDate,
+            currentMonth = currentDate.month,
+            currentYear = currentDate.year,
+            markedDates = setOf(currentDate.toKeyString())
+        )
+    )
+    val state: StateFlow<ScheduleState> = _state
+
+    fun selectDate(date: SimpleDate) {
+        _state.value = _state.value.copy(selectedDate = date)
+    }
+
+    fun changeMonth(month: Int) {
+        _state.value = _state.value.copy(currentMonth = month)
+    }
+
+    fun changeYear(year: Int) {
+        _state.value = _state.value.copy(currentYear = year)
+    }
 }
+
+data class ScheduleState(
+    val selectedDate: SimpleDate,
+    val currentMonth: Int,
+    val currentYear: Int,
+    val markedDates: Set<String>
+)

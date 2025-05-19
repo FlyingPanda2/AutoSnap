@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.navigation.ScreenObject
-import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,7 +51,7 @@ import java.util.Locale
 @Composable
 fun NewAppointmentForm(
     navController: NavHostController,
-    sharedViewModel: SharedViewModel
+    sharedViewModel: AppointmentSharedViewModel
 ) {
     val selectedClient by sharedViewModel.selectedClient.collectAsState()
     val selectedCar by sharedViewModel.selectedCar.collectAsState()

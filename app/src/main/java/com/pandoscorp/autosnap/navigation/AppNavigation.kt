@@ -31,11 +31,10 @@ import com.pandoscorp.autosnap.ui.screens.ProfileForm
 import com.pandoscorp.autosnap.ui.screens.ServiceChooseForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
-import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
-import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 
 
 @Composable
@@ -46,8 +45,7 @@ fun AppNavigation() {
     val authViewModel = AuthViewModel(userRepository)
     val addClientViewModel = AddClientViewModel()
     val clientViewModel = ClientsViewModel()
-    val sheduleViewModel = SheduleViewModel()
-    val sharedViewModel = SharedViewModel()
+    val appointmentSharedViewModel = AppointmentSharedViewModel()
     val addServiceViewModel = AddServiceViewModel()
     val serviceViewModel = ServiceViewModel()
 
@@ -83,7 +81,7 @@ fun AppNavigation() {
                 viewModel = clientViewModel,
                 forSelection = true,
                 onClientSelected = { client ->
-                    sharedViewModel.selectClient(client)
+                    appointmentSharedViewModel.selectClient(client)
                 }
             )
         }
@@ -97,7 +95,7 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val forDateSelection = backStackEntry.arguments?.getBoolean("forDateSelection") ?: false
-            SheduleForm(navController, sheduleViewModel, sharedViewModel, forDateSelection)
+            SheduleForm(navController, appointmentSharedViewModel, forDateSelection)
         }
         composable(ScreenObject.AddClientScreen.route){
             AddClientForm(navController, addClientViewModel)
@@ -117,10 +115,10 @@ fun AppNavigation() {
             ChatForm()
         }
         composable(ScreenObject.NewAppointmentScreen.route){
-            NewAppointmentForm(navController, sharedViewModel)
+            NewAppointmentForm(navController, appointmentSharedViewModel)
         }
         composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController, serviceViewModel, sharedViewModel, currentUser)
+            ServiceChooseForm(navController, serviceViewModel, appointmentSharedViewModel, currentUser)
         }
         composable(ScreenObject.AddServiceScreen.route){
             if(userId != null){
@@ -131,9 +129,9 @@ fun AppNavigation() {
         composable(ScreenObject.ClientCarsScreen.route) {
             ClientCarsForm(
                 navController = navController,
-                sharedViewModel = sharedViewModel,
+                appointmentSharedViewModel = appointmentSharedViewModel,
                 onCarSelected = { car ->
-                    sharedViewModel.selectCar(car)
+                    appointmentSharedViewModel.selectCar(car)
                 }
             )
         }

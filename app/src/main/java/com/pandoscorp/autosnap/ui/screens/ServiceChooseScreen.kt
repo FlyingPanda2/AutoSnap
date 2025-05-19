@@ -66,15 +66,15 @@ import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.repository.UserRepository
+import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
-import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ServiceChooseForm(
     navController: NavHostController,
     serviceViewModel: ServiceViewModel,
-    sharedViewModel: SharedViewModel,
+    sharedViewModel: AppointmentSharedViewModel,
     currentUser: User?
 ) {
 
