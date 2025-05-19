@@ -1,6 +1,7 @@
 ﻿package com.pandoscorp.autosnap.ui.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.pandoscorp.autosnap.model.Car
 import com.pandoscorp.autosnap.model.Client
@@ -15,8 +16,22 @@ class SharedViewModel : ViewModel() {
     private val _selectedCar = MutableStateFlow<Car?>(null)
     val selectedCar: StateFlow<Car?> = _selectedCar
 
-    private val _selectedServices = MutableStateFlow<List<Service>>(emptyList())
-    val selectedServices: StateFlow<List<Service>> = _selectedServices
+    private val _selectedServices = mutableStateListOf<Service>()
+    val selectedServices: List<Service> get() = _selectedServices
+
+    fun addSelectedService(service: Service) {
+        if (!_selectedServices.any { it.id == service.id }) {
+            _selectedServices.add(service)
+        }
+    }
+
+    fun removeSelectedService(serviceId: String) {
+        _selectedServices.removeAll { it.id == serviceId }
+    }
+
+    fun clearSelectedServices() {
+        _selectedServices.clear()
+    }
 
     fun selectClient(client: Client) {
         _selectedClient.value = client
@@ -25,13 +40,5 @@ class SharedViewModel : ViewModel() {
 
     fun selectCar(car: Car) {
         _selectedCar.value = car
-    }
-
-    fun addService(service: Service) {
-        _selectedServices.value = _selectedServices.value + service
-    }
-
-    fun removeService(service: Service) {
-        _selectedServices.value = _selectedServices.value - service
     }
 }

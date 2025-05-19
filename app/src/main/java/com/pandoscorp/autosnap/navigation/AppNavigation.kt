@@ -6,7 +6,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,15 +51,17 @@ fun AppNavigation() {
     val addServiceViewModel = AddServiceViewModel()
     val serviceViewModel = ServiceViewModel()
 
-    val currentUser by produceState<User?>(initialValue = null) {
-        if (userId != null) {
-            value = userRepository.getUserById(userId)
+    var currentUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(userId) {
+        userId?.let {
+            currentUser = userRepository.getUserById(it)
         }
     }
 
 
 
-    NavHost(navController = navController, startDestination = ScreenObject.ServiceChooseScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.NewAppointmentScreen.route) {
         composable(ScreenObject.MainScreen.route){
             MainForm(navController)
         }
@@ -106,7 +111,7 @@ fun AppNavigation() {
             NewAppointmentForm(navController, sharedViewModel)
         }
         composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController, serviceViewModel, currentUser)
+            ServiceChooseForm(navController, serviceViewModel, sharedViewModel, currentUser)
         }
         composable(ScreenObject.AddServiceScreen.route){
             if(userId != null){

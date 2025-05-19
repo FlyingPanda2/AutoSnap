@@ -7,7 +7,9 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.model.User
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class UserRepository {
 
@@ -46,17 +48,27 @@ class UserRepository {
     }
 
     //Получение пользователя по ID
-    suspend fun getUserById(userId: String): User? {
+    suspend fun getUserById(userId: String): User? = withContext(Dispatchers.IO) {
         try {
+            Log.d("UserDebug", "Fetching user $userId") // Лог 1
             val snapshot = userRef.child(userId).get().await()
-            if (snapshot.exists()) {
-                return snapshot.getValue(User::class.java)
-            } else {
-                return null
+            Log.d("UserDebug", "Snapshot: ${snapshot.value}") // Лог 2
+            snapshot.getValue(User::class.java)?.also {
+                Log.d("UserDebug", "Loaded user: ${it.username}") // Лог 3
             }
         } catch (e: Exception) {
-            Log.e("UserRepository", "Ошибка получения пользователя: ${e.message}", e)
-            return null
+            Log.e("UserDebug", "Error loading user", e) // Лог 4
+            null
+        }
+    }
+
+    suspend fun getUsername(userId: String): String = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = userRef.child(userId).child("username").get().await()
+            snapshot.getValue(String::class.java) ?: "Гость"
+        } catch (e: Exception) {
+            Log.e("UserRepo", "Error loading username", e)
+            "Гость"
         }
     }
 

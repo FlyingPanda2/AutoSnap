@@ -45,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,11 +74,13 @@ import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 fun ServiceChooseForm(
     navController: NavHostController,
     serviceViewModel: ServiceViewModel,
+    sharedViewModel: SharedViewModel,
     currentUser: User?
 ) {
-    var isChecked by remember { mutableStateOf(false) }
 
     val services by serviceViewModel.services.collectAsState()
+
+    val username = currentUser?.username ?: "Гость"
 
     Scaffold(
         topBar = {
@@ -89,7 +92,10 @@ fun ServiceChooseForm(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(
+                        onClick = { navController.navigate(ScreenObject.NewAppointmentScreen.route) },
+                        enabled = sharedViewModel.selectedServices.isNotEmpty()
+                    ) {
                         Icon(
                             Icons.Filled.Check,
                             contentDescription = "Done"
@@ -137,7 +143,7 @@ fun ServiceChooseForm(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "ООО: ${currentUser?.username ?: "Гость"}",
+                    text = "ООО: ${username}",
                     modifier = Modifier.padding(start = 8.dp),
                     color = Color.DarkGray
                 )
@@ -163,10 +169,19 @@ fun ServiceChooseForm(
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(services) { service ->
+
                         SelectableServiceItem(
-                            service = service,
-                            onToggle = { serviceViewModel.toggleServiceSelection(service.id) },
-                            modifier = Modifier.animateItemPlacement()
+                            service = service.copy(
+                                isSelected = sharedViewModel.selectedServices.any { it.id == service.id }
+                            ),
+                            onToggle = {
+                                if (sharedViewModel.selectedServices.any { it.id == service.id }) {
+                                    sharedViewModel.removeSelectedService(service.id)
+                                } else {
+                                    sharedViewModel.addSelectedService(service)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -211,34 +226,6 @@ fun AnimatedCircularCheckbox(
                 .size(size * 0.7f)
                 .alpha(checkAlpha)
         )
-    }
-}
-
-@Composable
-fun ServiceItem(
-    service: Service,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardColors(containerColor = Color.White, contentColor = Color.Black, disabledContentColor = Color.White, disabledContainerColor = Color.White),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = service.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Цена: ${service.price} ₽")
-            Text("Длительность: ${service.duration} мин")
-            Text("Описание: ${service.description}")
-        }
     }
 }
 
