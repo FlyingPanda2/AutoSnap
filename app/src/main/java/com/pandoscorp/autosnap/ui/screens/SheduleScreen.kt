@@ -50,13 +50,21 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.CalendarView
+import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.SheduleViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.getMonthName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SheduleForm(navController: NavHostController, viewModel: SheduleViewModel) {
+fun SheduleForm(
+    navController: NavHostController,
+    viewModel: SheduleViewModel,
+    sharedViewModel: SharedViewModel,
+    forDateSelection: Boolean = false
+) {
     val state by viewModel.state.collectAsState()
+
+    val selectedDate by sharedViewModel.selectedDate.collectAsState()
 
     Scaffold(
         topBar = {
@@ -108,26 +116,28 @@ fun SheduleForm(navController: NavHostController, viewModel: SheduleViewModel) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn(
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                                .shadow(elevation = 2.dp)
-                                .background(Color.Gray)
-                                .clickable { navController.navigate(ScreenObject.NewAppointmentScreen.route) },
-                            contentAlignment = Alignment.Center,
-                        ){
-                            Text(
-                                text = "Создать запись",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White,
-                                fontSize = 16.sp
+                if(!forDateSelection){
+                    LazyColumn(
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                                    .shadow(elevation = 2.dp)
+                                    .background(Color.Gray)
+                                    .clickable { navController.navigate(ScreenObject.NewAppointmentScreen.route) },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Text(
+                                    text = "Создать запись",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White,
+                                    fontSize = 16.sp
 
-                            )
+                                )
+                            }
                         }
                     }
                 }

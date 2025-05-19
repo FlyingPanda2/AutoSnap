@@ -61,7 +61,7 @@ fun AppNavigation() {
 
 
 
-    NavHost(navController = navController, startDestination = ScreenObject.NewAppointmentScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route){
             MainForm(navController)
         }
@@ -87,8 +87,17 @@ fun AppNavigation() {
                 }
             )
         }
-        composable(ScreenObject.SheduleScreen.route){
-            SheduleForm(navController, sheduleViewModel)
+        composable(
+            route = ScreenObject.SheduleScreen.route,
+            arguments = listOf(
+                navArgument("forDateSelection") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val forDateSelection = backStackEntry.arguments?.getBoolean("forDateSelection") ?: false
+            SheduleForm(navController, sheduleViewModel, sharedViewModel, forDateSelection)
         }
         composable(ScreenObject.AddClientScreen.route){
             AddClientForm(navController, addClientViewModel)

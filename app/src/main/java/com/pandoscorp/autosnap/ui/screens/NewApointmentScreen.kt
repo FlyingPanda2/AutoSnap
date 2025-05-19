@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.SharedViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +55,9 @@ fun NewAppointmentForm(
 ) {
     val selectedClient by sharedViewModel.selectedClient.collectAsState()
     val selectedCar by sharedViewModel.selectedCar.collectAsState()
+
+    val selectedDate by sharedViewModel.selectedDate.collectAsState()
+    val currentDate = remember { Date() }
 
     val selectedServices by remember {
         derivedStateOf { sharedViewModel.selectedServices.toList() }
@@ -320,7 +326,12 @@ fun NewAppointmentForm(
                         .fillMaxWidth()
                         .height(50.dp)
                         .shadow(elevation = 3.dp)
-                        .background(Color.White),
+                        .background(Color.White)
+                        .clickable {
+                            navController.navigate(
+                                ScreenObject.SheduleScreen.createRoute(forDateSelection = true)
+                            )
+                        },
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
@@ -335,11 +346,14 @@ fun NewAppointmentForm(
                                 .weight(1f)
                         )
 
-                        Icon(
-                            Icons.Sharp.KeyboardArrowRight,
-                            contentDescription = "Done",
+                        Text(
+                            text = sharedViewModel.selectedDate.value?.formatDate()
+                                ?: Date().formatDate(),
+                            fontSize = 16.sp,
+                            color = Color.Gray
+                        )
 
-                            )
+                        Icon(Icons.Sharp.KeyboardArrowRight, contentDescription = null)
                     }
                 }
 
@@ -497,4 +511,9 @@ fun NewAppointmentForm(
 
         }
     )
+}
+
+fun Date.formatDate(): String {
+    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    return formatter.format(this)
 }
