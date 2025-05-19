@@ -2,12 +2,13 @@ package com.pandoscorp.autosnap.navigation
 
 import AddClientForm
 import AddClientViewModel
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
@@ -23,13 +24,13 @@ import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientCarsForm
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
-import com.pandoscorp.autosnap.ui.screens.RegistrationForm
-import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
 import com.pandoscorp.autosnap.ui.screens.NewAppointmentForm
 import com.pandoscorp.autosnap.ui.screens.ProfileForm
+import com.pandoscorp.autosnap.ui.screens.RegistrationForm
 import com.pandoscorp.autosnap.ui.screens.ServiceChooseForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
+import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
@@ -37,6 +38,7 @@ import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation() {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -60,19 +62,19 @@ fun AppNavigation() {
 
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
-        composable(ScreenObject.MainScreen.route){
+        composable(ScreenObject.MainScreen.route) {
             MainForm(navController)
         }
-        composable(ScreenObject.RegScreen.route){
+        composable(ScreenObject.RegScreen.route) {
             RegistrationForm(navController, authViewModel)
         }
-        composable(ScreenObject.LoginScreen.route){
+        composable(ScreenObject.LoginScreen.route) {
             LoginForm(navController, authViewModel)
         }
-        composable(ScreenObject.WelcomeScreen.route){
+        composable(ScreenObject.WelcomeScreen.route) {
             WelcomeForm(navController)
         }
-        composable(ScreenObject.ClientsScreen.route){
+        composable(ScreenObject.ClientsScreen.route) {
             ClientsForm(navController, clientViewModel)
         }
         composable("clients/selection") {
@@ -95,17 +97,16 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val forDateSelection = backStackEntry.arguments?.getBoolean("forDateSelection") ?: false
-            SheduleForm(navController, appointmentSharedViewModel, forDateSelection)
+            SheduleForm(navController, appointmentSharedViewModel)
         }
-        composable(ScreenObject.AddClientScreen.route){
+        composable(ScreenObject.AddClientScreen.route) {
             AddClientForm(navController, addClientViewModel)
         }
-        composable(ScreenObject.ProfileScreen.route + "/{userId}"){ backStackEntry ->
+        composable(ScreenObject.ProfileScreen.route + "/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            if(userId.isNotEmpty()){
+            if (userId.isNotEmpty()) {
                 ProfileForm(navController, userId, userRepository)
-            }
-            else{
+            } else {
                 Text("Пользователь не найден")
             }
         }
@@ -114,14 +115,19 @@ fun AppNavigation() {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
             ChatForm()
         }
-        composable(ScreenObject.NewAppointmentScreen.route){
+        composable(ScreenObject.NewAppointmentScreen.route) {
             NewAppointmentForm(navController, appointmentSharedViewModel)
         }
-        composable(ScreenObject.ServiceChooseScreen.route){
-            ServiceChooseForm(navController, serviceViewModel, appointmentSharedViewModel, currentUser)
+        composable(ScreenObject.ServiceChooseScreen.route) {
+            ServiceChooseForm(
+                navController,
+                serviceViewModel,
+                appointmentSharedViewModel,
+                currentUser
+            )
         }
-        composable(ScreenObject.AddServiceScreen.route){
-            if(userId != null){
+        composable(ScreenObject.AddServiceScreen.route) {
+            if (userId != null) {
                 AddServiceForm(navController, userId, addServiceViewModel)
             }
         }
