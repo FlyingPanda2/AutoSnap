@@ -19,20 +19,20 @@ class UserRepository {
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(databaseUrl)
     private val userRef: DatabaseReference = database.getReference("users")
 
-    //Регистрация пользователя
     suspend fun registerUser(user: User, password: String): String {
-        try {
-            auth.createUserWithEmailAndPassword(user.email, password)
+        return try {
+            // Регистрация в Firebase Auth
+            val authResult = auth.createUserWithEmailAndPassword(user.email, password).await()
+            val userId = authResult.user?.uid ?: throw Exception("User ID is null")
 
-            val userId = auth.currentUser?.uid
-            if (userId != null) {
-                user.id = userId
-                userRef.child(userId).setValue(user).await()
-            }
-            return "Пользователь успешно зарегистрирован"
+            // Сохранение данных пользователя
+            user.id = userId
+            userRef.child(userId).setValue(user).await()
+
+            "Пользователь успешно зарегистрирован"
         } catch (e: Exception) {
             Log.e("UserRepository", "Ошибка регистрации: ${e.message}", e)
-            return "Ошибка регистрации: ${e.message}"
+            "Ошибка регистрации: ${e.message}"
         }
     }
 
@@ -50,14 +50,28 @@ class UserRepository {
     //Получение пользователя по ID
     suspend fun getUserById(userId: String): User? = withContext(Dispatchers.IO) {
         try {
-            Log.d("UserDebug", "Fetching user $userId") // Лог 1
+            Log.d("UserDebug", "Fetching user $userId")
             val snapshot = userRef.child(userId).get().await()
-            Log.d("UserDebug", "Snapshot: ${snapshot.value}") // Лог 2
-            snapshot.getValue(User::class.java)?.also {
-                Log.d("UserDebug", "Loaded user: ${it.username}") // Лог 3
-            }
+
+            if (!snapshot.exists()) return@withContext null
+
+            // Получаем данные как Map<*, *>
+            val data = snapshot.value as? Map<*, *> ?: return@withContext null
+
+            val username = data["username"] as? String ?: ""
+            val email = data["email"] as? String ?: ""
+            val phone = data["phone"] as? String ?: ""
+            val address = data["address"] as? String ?: ""
+
+            User(
+                id = userId,
+                username = username,
+                email = email,
+                phone = phone,
+                address = address
+            )
         } catch (e: Exception) {
-            Log.e("UserDebug", "Error loading user", e) // Лог 4
+            Log.e("UserDebug", "Error loading user", e)
             null
         }
     }

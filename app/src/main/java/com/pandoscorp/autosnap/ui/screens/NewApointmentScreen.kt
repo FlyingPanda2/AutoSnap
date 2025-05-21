@@ -111,7 +111,8 @@ fun NewAppointmentForm(
                         sharedViewModel.saveAppointment(
                             onSuccess = {
                                 Toast.makeText(context, "Запись успешно сохранена", Toast.LENGTH_SHORT).show()
-                                navController.navigate(ScreenObject.SheduleScreen.route)
+                                sharedViewModel.setDateSelectionMode(false)
+                                navController.popBackStack(ScreenObject.SheduleScreen.route, inclusive = true)
                             },
                             onError = { error ->
                                 Toast.makeText(context, error, Toast.LENGTH_SHORT).show()

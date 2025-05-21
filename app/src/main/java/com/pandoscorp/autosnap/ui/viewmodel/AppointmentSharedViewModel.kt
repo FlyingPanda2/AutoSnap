@@ -278,7 +278,7 @@ class AppointmentSharedViewModel: ViewModel() {
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
                 // Формат даты как в базе: "2025-5-21"
-                val dateStr = "${date.year}-${date.month}-${date.day}"
+                val dateStr = "${date.year}-${if (date.month < 10) "0${date.month}" else date.month}-${if (date.day < 10) "0${date.day}" else date.day}"
 
                 Log.d("Appointments", "Loading appointments for date: $dateStr")
 
@@ -385,6 +385,30 @@ class AppointmentSharedViewModel: ViewModel() {
         } catch (e: Exception) {
             Log.e("CarLoad", "Ошибка при загрузке автомобиля", e)
             null
+        }
+    }
+
+    fun deleteAppointment(appointmentId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: run {
+                    onError("Пользователь не авторизован")
+                    return@launch
+                }
+
+                database.getReference("users/$userId/appointments/$appointmentId")
+                    .removeValue()
+                    .addOnSuccessListener {
+                        // Обновляем список после удаления
+                        loadAppointmentsForDate(state.value.selectedDate)
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        onError("Ошибка удаления: ${e.message}")
+                    }
+            } catch (e: Exception) {
+                onError("Ошибка: ${e.message}")
+            }
         }
     }
 

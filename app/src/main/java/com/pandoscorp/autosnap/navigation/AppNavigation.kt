@@ -18,10 +18,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.pandoscorp.autosnap.model.User
+import com.pandoscorp.autosnap.repository.ClientRepository
 import com.pandoscorp.autosnap.repository.UserRepository
 import com.pandoscorp.autosnap.ui.screens.AddServiceForm
 import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientCarsForm
+import com.pandoscorp.autosnap.ui.screens.ClientMainForm
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
@@ -35,6 +37,7 @@ import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.MainViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
 
 
@@ -43,13 +46,15 @@ import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
 fun AppNavigation() {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     val navController = rememberNavController()
+    val clientRepository = ClientRepository()
     val userRepository = UserRepository()
-    val authViewModel = AuthViewModel(userRepository)
+    val authViewModel = AuthViewModel(userRepository, clientRepository)
     val addClientViewModel = AddClientViewModel()
     val clientViewModel = ClientsViewModel()
     val appointmentSharedViewModel = AppointmentSharedViewModel()
     val addServiceViewModel = AddServiceViewModel()
     val serviceViewModel = ServiceViewModel()
+    val mainViewModel = MainViewModel()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -63,7 +68,7 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
         composable(ScreenObject.MainScreen.route) {
-            MainForm(navController)
+            MainForm(navController, mainViewModel)
         }
         composable(ScreenObject.RegScreen.route) {
             RegistrationForm(navController, authViewModel)
@@ -101,6 +106,9 @@ fun AppNavigation() {
         }
         composable(ScreenObject.AddClientScreen.route) {
             AddClientForm(navController, addClientViewModel)
+        }
+        composable(ScreenObject.ClientMainScreen.route) {
+            ClientMainForm(navController)
         }
         composable(ScreenObject.ProfileScreen.route + "/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""

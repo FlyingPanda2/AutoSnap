@@ -1,7 +1,9 @@
 package com.pandoscorp.autosnap.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.pandoscorp.autosnap.model.Client
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
@@ -39,64 +42,90 @@ fun RegistrationForm(
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    // Состояние для выбора типа пользователя
+    var userType by remember { mutableStateOf("client") } // "client" или "service"
 
-    var username by remember { mutableStateOf("") }
+    // Общие поля
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
+    // Поля для клиента
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") }
+
+    // Поля для автосервиса
+    var serviceName by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+
     val registrationState by authViewModel.registrationState.collectAsState()
     val errorState by authViewModel.errorState.collectAsState()
 
     LaunchedEffect(registrationState) {
-        if (registrationState.isNotEmpty()) {
-            if (registrationState == "Пользователь успешно зарегистрирован") {
-                navController.navigate(ScreenObject.MainScreen.route) {
-                    popUpTo(ScreenObject.RegScreen.route) { inclusive = true }
-                }
-                authViewModel.clearStates()
+        if (registrationState == "Пользователь успешно зарегистрирован") {
+            when (userType) {
+                "client" -> navController.navigate(ScreenObject.ClientMainScreen.route)
+                "service" -> navController.navigate(ScreenObject.MainScreen.route)
             }
+            authViewModel.clearStates()
+            // Очищаем стек навигации
+            navController.popBackStack(ScreenObject.RegScreen.route, inclusive = true)
         }
     }
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(40.dp),
+            .padding(horizontal = 40.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
-        Spacer(modifier = Modifier.padding(20.dp))
-
         Text(
             text = "Создать аккаунт",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 50.dp)
+            modifier = Modifier.padding(bottom = 30.dp)
         )
 
-        Spacer(modifier = Modifier.padding(40.dp))
-
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Имя") },
+        // Переключатель типа пользователя
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp),
-            shape = CircleShape,
-            singleLine = true
-        )
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(
+                onClick = { userType = "client" },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (userType == "client") Color.Blue else Color.LightGray
+                )
+            ) {
+                Text("Клиент")
+            }
 
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = { userType = "service" },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (userType == "service") Color.Blue else Color.LightGray
+                )
+            ) {
+                Text("Автосервис")
+            }
+        }
+
+        // Общие поля для всех типов пользователей
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp),
+                .padding(bottom = 8.dp),
             shape = CircleShape,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true
@@ -108,19 +137,81 @@ fun RegistrationForm(
             label = { Text("Номер телефона") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp),
+                .padding(bottom = 8.dp),
             shape = CircleShape,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             singleLine = true
         )
 
+        // Поля в зависимости от типа пользователя
+        if (userType == "client") {
+            // Поля для клиента
+            OutlinedTextField(
+                value = firstName,
+                onValueChange = { firstName = it },
+                label = { Text("Имя") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = CircleShape,
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = lastName,
+                onValueChange = { lastName = it },
+                label = { Text("Фамилия") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = CircleShape,
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = birthDate,
+                onValueChange = { birthDate = it },
+                label = { Text("Дата рождения (ДД.ММ.ГГГГ)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = CircleShape,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+        } else {
+            // Поля для автосервиса
+            OutlinedTextField(
+                value = serviceName,
+                onValueChange = { serviceName = it },
+                label = { Text("Название автосервиса") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = CircleShape,
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = { Text("Адрес") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = CircleShape,
+                singleLine = true
+            )
+        }
+
+        // Поля паролей
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Пароль") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp),
+                .padding(bottom = 8.dp),
             shape = CircleShape,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true
@@ -132,7 +223,7 @@ fun RegistrationForm(
             label = { Text("Повторите пароль") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 5.dp),
+                .padding(bottom = 8.dp),
             shape = CircleShape,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true
@@ -142,11 +233,12 @@ fun RegistrationForm(
             Text(
                 text = errorState,
                 textAlign = TextAlign.Center,
-                color = Color.Red
+                color = Color.Red,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(100.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
@@ -154,18 +246,33 @@ fun RegistrationForm(
                     authViewModel.setError("Пароли не совпадают")
                     return@Button
                 }
-                val user = User(username = username, email = email, phone = phone)
 
-                authViewModel.registerUser(user, password)
+                val user = User(
+                    id = "", // Будет заполнено при регистрации
+                    username = if (userType == "client") "$firstName $lastName" else serviceName,
+                    email = email,
+                    phone = phone,
+                )
+
+                val clientData = if (userType == "client") {
+                    Client(
+                        name = firstName,
+                        surname = lastName,
+                        birthdate = birthDate,
+                        email = email,
+                        phone = phone,
+                    )
+                } else null
+
+                authViewModel.registerUser(user, password, clientData)
             },
             modifier = Modifier
-                .width(260.dp)
+                .fillMaxWidth()
                 .height(60.dp),
             colors = ButtonDefaults.buttonColors(
                 contentColor = Color.White,
                 containerColor = Color.Blue
             )
-
         ) {
             Text("Зарегистрироваться")
         }

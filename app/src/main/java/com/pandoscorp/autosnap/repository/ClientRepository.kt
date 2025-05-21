@@ -3,11 +3,22 @@
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.pandoscorp.autosnap.model.Client
+import kotlinx.coroutines.tasks.await
 
 class ClientRepository {
     private val databaseUrl = "https://autosnap-c15c0-default-rtdb.europe-west1.firebasedatabase.app"
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(databaseUrl)
     private val auth = FirebaseAuth.getInstance()
+
+    suspend fun addRealClient(client: Client) {
+        try {
+            database.getReference("clients/${client.id}")
+                .setValue(client)
+                .await()
+        } catch (e: Exception) {
+            throw Exception("Не удалось добавить клиента: ${e.message}")
+        }
+    }
 
     fun getClients(onSuccess: (List<Client>) -> Unit, onError: (String) -> Unit) {
         val userId = auth.currentUser?.uid ?: run {
