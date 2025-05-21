@@ -3,6 +3,7 @@
 import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,7 +74,7 @@ fun NewAppointmentForm(
     val selectedClient by sharedViewModel.selectedClient.collectAsState()
     val selectedCar by sharedViewModel.selectedCar.collectAsState()
     val selectedDate by sharedViewModel.state.collectAsState()
-    var showTimePicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val selectedServices by remember {
         derivedStateOf { sharedViewModel.selectedServices.toList() }
     }
@@ -105,7 +107,17 @@ fun NewAppointmentForm(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {
+                        sharedViewModel.saveAppointment(
+                            onSuccess = {
+                                Toast.makeText(context, "Запись успешно сохранена", Toast.LENGTH_SHORT).show()
+                                navController.navigate(ScreenObject.SheduleScreen.route)
+                            },
+                            onError = { error ->
+                                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }) {
                         Icon(
                             Icons.Filled.Check,
                             contentDescription = "Done"

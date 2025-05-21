@@ -10,32 +10,41 @@ class ClientRepository {
     private val auth = FirebaseAuth.getInstance()
 
     fun getClients(onSuccess: (List<Client>) -> Unit, onError: (String) -> Unit) {
-        val userId = auth.currentUser?.uid
-        if (userId == null) {
+        val userId = auth.currentUser?.uid ?: run {
             onError("Пользователь не авторизован")
             return
         }
 
-        val clientsRef = database.getReference("users").child(userId).child("clients")
-        clientsRef.get().addOnSuccessListener { snapshot ->
-            val clients = mutableListOf<Client>()
-            for (child in snapshot.children) {
-                val client = child.getValue(Client::class.java)
-                if (client != null) {
-                    clients.add(client)
+        database.getReference("users/$userId/clients")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                try {
+                    val clients = snapshot.children.mapNotNull { child ->
+                        try {
+                            // Получаем данные клиента как HashMap
+                            val clientData = child.value as? Map<String, Any>
+                                ?: throw Exception("Invalid client data format")
+
+                            // Преобразуем в объект Client
+                            Client(
+                                id = child.key ?: "",
+                                name = clientData["name"] as? String ?: "",
+                                surname = clientData["surname"] as? String ?: "",
+                                phone = clientData["phone"] as? String ?: "",
+                                note = clientData["note"] as? String ?: "",
+                                // Добавьте другие поля по аналогии
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    onSuccess(clients)
+                } catch (e: Exception) {
+                    onError("Ошибка обработки данных: ${e.message}")
                 }
             }
-            onSuccess(clients)
-        }.addOnFailureListener {
-            onError("Ошибка загрузки клиентов: ${it.message}")
-        }
-    }
-
-    fun getClientWithCars(
-        clientId: String,
-        onSuccess: (Client) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        // Реализация загрузки клиента с автомобилями из Firebase/Firestore
+            .addOnFailureListener {
+                onError("Ошибка загрузки клиентов: ${it.message ?: "Неизвестная ошибка"}")
+            }
     }
 }

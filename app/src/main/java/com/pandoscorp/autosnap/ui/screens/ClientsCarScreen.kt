@@ -20,8 +20,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -38,7 +42,28 @@ fun ClientCarsForm(
     onCarSelected: (Car) -> Unit = {}
 ) {
     val selectedClient by appointmentSharedViewModel.selectedClient.collectAsState()
-    val cars = selectedClient?.cars ?: emptyList()
+    val cars = remember { mutableStateListOf<Car>() }
+    val isLoading = remember { mutableStateOf(false) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    // Загружаем автомобили при открытии экрана
+    LaunchedEffect(selectedClient) {
+        selectedClient?.let { client ->
+            isLoading.value = true
+            appointmentSharedViewModel.loadClientCars(
+                clientId = client.id,
+                onSuccess = { loadedCars ->
+                    cars.clear()
+                    cars.addAll(loadedCars)
+                    isLoading.value = false
+                },
+                onError = { message ->
+                    errorMessage.value = message
+                    isLoading.value = false
+                }
+            )
+        }
+    }
 
     Scaffold(
         topBar = {

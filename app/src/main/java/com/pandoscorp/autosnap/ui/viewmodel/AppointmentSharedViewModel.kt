@@ -1,15 +1,15 @@
 ﻿package com.pandoscorp.autosnap.ui.viewmodel
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.geometry.times
-import androidx.compose.ui.unit.times
 import androidx.lifecycle.ViewModel
 import com.pandoscorp.autosnap.model.Car
 import com.pandoscorp.autosnap.model.Client
 import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.model.SimpleDate
-import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.utilis.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,8 +20,17 @@ import kotlinx.coroutines.flow.stateIn
 import java.time.LocalTime
 import java.util.Date
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.pandoscorp.autosnap.model.Appointment
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
-import kotlin.time.times
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class AppointmentSharedViewModel: ViewModel() {
     private val _selectedClient = MutableStateFlow<Client?>(null)
@@ -153,21 +162,232 @@ class AppointmentSharedViewModel: ViewModel() {
         initialValue = 0
     )
 
-    // Итоговая стоимость (с учетом скидки)
-    val finalPrice: StateFlow<Int> = combine(
-        totalPrice,
-        discountAmount
-    ) { price, discount ->
-        price - discount
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
-
     fun setDiscountPercent(percent: Int) {
         _discountPercent.value = percent.coerceIn(0, 100)
     }
+
+    fun loadClientCars(clientId: String, onSuccess: (List<Car>) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: run {
+                    onError("Пользователь не авторизован")
+                    return@launch
+                }
+
+                database.getReference("users/$userId/clients/$clientId/cars")
+                    .get()
+                    .addOnSuccessListener { snapshot ->
+                        val cars = snapshot.children.mapNotNull { child ->
+                            try {
+                                child.getValue(Car::class.java)?.copy(id = child.key ?: "")
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
+                        onSuccess(cars)
+                    }
+                    .addOnFailureListener {
+                        onError("Ошибка загрузки автомобилей: ${it.message ?: "Неизвестная ошибка"}")
+                    }
+            } catch (e: Exception) {
+                onError("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private val databaseUrl = "https://autosnap-c15c0-default-rtdb.europe-west1.firebasedatabase.app"
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance(databaseUrl)
+    private val auth = FirebaseAuth.getInstance()
+    private val userId = auth.currentUser?.uid
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun saveAppointment(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val client = _selectedClient.value
+        val car = _selectedCar.value
+        val services = _selectedServices.toList()
+        val date = _state.value.selectedDate
+        val time = _startTime.value
+
+        if (client == null) {
+            onError("Выберите клиента")
+            return
+        }
+        if (car == null) {
+            onError("Выберите автомобиль")
+            return
+        }
+        if (services.isEmpty()) {
+            onError("Выберите хотя бы одну услугу")
+            return
+        }
+        if (time == null) {
+            onError("Укажите время начала")
+            return
+        }
+
+        val userId = auth.currentUser?.uid ?: run {
+            onError("Пользователь не авторизован")
+            return
+        }
+
+        // Форматирование даты и времени
+        val dateStr = "${date.year}-${if (date.month < 10) "0${date.month}" else date.month}-${if (date.day < 10) "0${date.day}" else date.day}"
+        val timeStr = time.format(DateTimeFormatter.ofPattern("HH:mm"))
+        val createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+        // Расчет итоговой цены
+        val totalPrice = services.sumOf { it.price }
+        val finalPrice = totalPrice - (totalPrice * _discountPercent.value / 100)
+
+        val appointment = Appointment(
+            clientId = client.id,
+            carId = car.id,
+            serviceIds = services.map { it.id },
+            date = dateStr,
+            time = timeStr,
+            totalPrice = finalPrice,
+            discountPercent = _discountPercent.value,
+            createdAt = createdAt
+        )
+
+        viewModelScope.launch {
+            try {
+                val newAppointmentRef = database.getReference("users/$userId/appointments").push()
+                appointment.id = newAppointmentRef.key ?: ""
+                newAppointmentRef.setValue(appointment)
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        onError("Ошибка сохранения: ${e.message}")
+                    }
+            } catch (e: Exception) {
+                onError("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private val _appointments = MutableStateFlow<List<Appointment>>(emptyList())
+    val appointments: StateFlow<List<Appointment>> = _appointments
+
+    fun loadAppointmentsForDate(date: SimpleDate) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                // Формат даты как в базе: "2025-5-21"
+                val dateStr = "${date.year}-${date.month}-${date.day}"
+
+                Log.d("Appointments", "Loading appointments for date: $dateStr")
+
+                // Правильный путь к записям
+                database.getReference("users/$userId/appointments")
+                    .orderByChild("date")
+                    .equalTo(dateStr)
+                    .get()
+                    .addOnSuccessListener { snapshot ->
+                        Log.d("Appointments", "Snapshot: ${snapshot.value}")
+
+                        val loadedAppointments = snapshot.children.mapNotNull { child ->
+                            try {
+                                val appointment = child.getValue(Appointment::class.java)
+                                Log.d("Appointments", "Found appointment: ${appointment?.id}")
+                                appointment?.copy(id = child.key ?: "")
+                            } catch (e: Exception) {
+                                Log.e("Appointments", "Error parsing appointment", e)
+                                null
+                            }
+                        }
+
+                        Log.d("Appointments", "Loaded ${loadedAppointments.size} appointments")
+                        _appointments.value = loadedAppointments
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Appointments", "Error loading appointments", e)
+                        // Показываем пользователю сообщение об ошибке
+                        _appointments.value = emptyList()
+                    }
+            } catch (e: Exception) {
+                Log.e("Appointments", "Exception", e)
+                _appointments.value = emptyList()
+            }
+        }
+    }
+
+    suspend fun getClientById(clientId: String): Client? = withContext(Dispatchers.IO) {
+        try {
+            val userId = auth.currentUser?.uid ?: return@withContext null
+            val ref = database.getReference("users/$userId/clients/$clientId")
+            val snapshot = ref.get().await()
+
+            if (!snapshot.exists()) return@withContext null
+
+            // Читаем все поля вручную
+            val id = clientId
+            val name = snapshot.child("name").value as? String ?: ""
+            val surname = snapshot.child("surname").value as? String ?: ""
+            val phone = snapshot.child("phone").value as? String ?: ""
+            val email = snapshot.child("email").value as? String ?: ""
+            val birthdate = snapshot.child("birthdate").value as? String ?: ""
+            val note = snapshot.child("note").value as? String ?: ""
+
+            // Получаем Map<String, Car>
+            val carsMap = snapshot.child("cars").children.mapNotNull { carSnapshot ->
+                val carKey = carSnapshot.key ?: return@mapNotNull null
+                val car = carSnapshot.getValue(Car::class.java)?.copy(id = carKey)
+                car
+            }
+
+            // Создаём клиент с List<Car>
+            Client(
+                id = id,
+                name = name,
+                surname = surname,
+                phone = phone,
+                email = email,
+                birthdate = birthdate,
+                note = note,
+                cars = carsMap
+            )
+        } catch (e: Exception) {
+            Log.e("ClientLoad", "Ошибка при загрузке клиента", e)
+            null
+        }
+    }
+
+    suspend fun getServicesByIds(serviceIds: List<String>): List<Service> = withContext(Dispatchers.IO) {
+        try {
+            val userId = auth.currentUser?.uid ?: return@withContext emptyList()
+            val servicesRef = database.getReference("users/$userId/services")
+            val snapshot = servicesRef.get().await()
+
+            val allServices = snapshot.children.mapNotNull { child ->
+                val serviceId = child.key ?: return@mapNotNull null
+                val service = child.getValue(Service::class.java)?.copy(id = serviceId)
+                service
+            }
+
+            return@withContext allServices.filter { it.id in serviceIds }
+        } catch (e: Exception) {
+            Log.e("ServiceLoad", "Ошибка при загрузке услуг", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getCarById(clientId: String, carId: String): Car? = withContext(Dispatchers.IO) {
+        try {
+            val userId = auth.currentUser?.uid ?: return@withContext null
+            val snapshot = database.getReference("users/$userId/clients/$clientId/cars/$carId").get().await()
+            Log.d("CarLoad", "Загружаем автомобиль с ID: $carId для клиента: $clientId")
+            snapshot.getValue(Car::class.java)?.copy(id = carId)
+        } catch (e: Exception) {
+            Log.e("CarLoad", "Ошибка при загрузке автомобиля", e)
+            null
+        }
+    }
+
 }
 
 data class ScheduleState(

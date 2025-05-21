@@ -1,20 +1,15 @@
-﻿import android.os.Parcel
-import android.os.Parcelable
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.lifecycle.ViewModel
+﻿import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import com.pandoscorp.autosnap.model.Car
 import com.pandoscorp.autosnap.model.Client
-import com.pandoscorp.autosnap.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class AddClientViewModel() : ViewModel() {
 
@@ -55,7 +50,9 @@ class AddClientViewModel() : ViewModel() {
 
     fun saveCar() {
         if (_currentCarData.value.brand.isNotEmpty() && _currentCarData.value.model.isNotEmpty()) {
-            val updatedCars = _uiState.value.cars + _currentCarData.value
+            // Генерируем уникальный ID для автомобиля
+            val carWithId = _currentCarData.value.copy(id = UUID.randomUUID().toString())
+            val updatedCars = _uiState.value.cars + carWithId
             _uiState.value = _uiState.value.copy(cars = updatedCars)
             _currentCarData.value = Car()
             toggleCarFormVisibility()
@@ -72,29 +69,36 @@ class AddClientViewModel() : ViewModel() {
 
     fun saveClientToFirebase() {
         viewModelScope.launch {
-            val userId = auth.currentUser?.uid
-            if (userId == null) {
+            val userId = auth.currentUser?.uid ?: run {
                 println("Ошибка: Пользователь не авторизован")
                 return@launch
             }
 
             val client = _uiState.value
             val clientRef = getClientRef()
-            val clientId = clientRef.push().key
-
-            clientId?.let {
-                val updatedUser = client.copy(id = it)
-                clientRef.child(it).setValue(updatedUser)
-                clientRef.child(it).child("cars").setValue(client.cars)
-            } ?: run {
+            val clientId = clientRef.push().key ?: run {
                 println("Не удалось создать уникальный ключ для клиента")
+                return@launch
+            }
+
+            // Создаем клиента БЕЗ списка автомобилей
+            val clientWithoutCars = client.copy(cars = emptyList(), id = clientId)
+
+            // 1. Сохраняем основную информацию о клиенте
+            clientRef.child(clientId).setValue(clientWithoutCars)
+
+            // 2. Отдельно сохраняем автомобили под узлом cars
+            val carsRef = clientRef.child(clientId).child("cars")
+            client.cars.forEach { car ->
+                val carId = carsRef.push().key ?: return@forEach
+                carsRef.child(carId).setValue(car.copy(id = carId))
             }
         }
     }
 
     fun clearState() {
-        _uiState.value = Client() // Сбрасываем состояние клиента
-        _isCarFormVisible.value = false // Скрываем форму автомобиля
-        _currentCarData.value = Car() // Сбрасываем текущие данные автомобиля
+        _uiState.value = Client()
+        _isCarFormVisible.value = false
+        _currentCarData.value = Car()
     }
 }

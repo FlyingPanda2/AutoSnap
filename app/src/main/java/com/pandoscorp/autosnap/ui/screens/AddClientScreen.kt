@@ -60,8 +60,8 @@ fun AddClientForm(
                 actions = {
                     IconButton(onClick = {
                         viewModel.saveClientToFirebase()
-                        navController.popBackStack()
                         viewModel.clearState()
+                        navController.popBackStack()
                     }) {
                         Icon(
                             Icons.Filled.Check,
@@ -238,7 +238,7 @@ fun AddClientForm(
                         }
                     }
                 }
-                if (userState.cars.isNotEmpty()) {
+                if (userState.cars!!.isNotEmpty()) {
                     item{Spacer(modifier = Modifier.height(16.dp))}
                     item{
                         Text(
@@ -246,7 +246,7 @@ fun AddClientForm(
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                    userState.cars.forEachIndexed { index, car ->
+                    userState.cars!!.forEachIndexed { index, car ->
                         item{
                             Box(
                                 modifier = Modifier

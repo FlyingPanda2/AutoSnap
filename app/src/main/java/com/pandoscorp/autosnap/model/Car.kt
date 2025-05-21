@@ -3,6 +3,7 @@
 import kotlinx.coroutines.flow.MutableStateFlow
 
 data class Car(
+    val id: String = "",
     val brand: String = "",
     val model: String = "",
     val year: String = "",

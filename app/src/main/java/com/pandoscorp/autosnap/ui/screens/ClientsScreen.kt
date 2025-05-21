@@ -117,6 +117,13 @@ fun ClientsForm(
                                     color = Color.Gray
                                 )
                             }
+                            if(client.note.isNotEmpty()){
+                                Text(
+                                    text = "Заметка: ${client.note}",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }
