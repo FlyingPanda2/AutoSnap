@@ -36,6 +36,7 @@ import com.pandoscorp.autosnap.model.Client
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun RegistrationForm(
@@ -65,13 +66,22 @@ fun RegistrationForm(
 
     LaunchedEffect(registrationState) {
         if (registrationState == "Пользователь успешно зарегистрирован") {
+            // Даем время на обработку всех событий
+            delay(1000)
+
             when (userType) {
-                "client" -> navController.navigate(ScreenObject.ClientMainScreen.route)
-                "service" -> navController.navigate(ScreenObject.MainScreen.route)
+                "client" -> {
+                    navController.navigate(ScreenObject.ClientMainScreen.route) {
+                        popUpTo(ScreenObject.RegScreen.route) { inclusive = true }
+                    }
+                }
+                "service" -> {
+                    navController.navigate(ScreenObject.MainScreen.route) {
+                        popUpTo(ScreenObject.RegScreen.route) { inclusive = true }
+                    }
+                }
             }
             authViewModel.clearStates()
-            // Очищаем стек навигации
-            navController.popBackStack(ScreenObject.RegScreen.route, inclusive = true)
         }
     }
 

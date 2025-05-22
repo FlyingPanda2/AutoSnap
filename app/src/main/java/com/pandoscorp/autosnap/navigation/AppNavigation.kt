@@ -20,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.repository.ClientRepository
 import com.pandoscorp.autosnap.repository.UserRepository
+import com.pandoscorp.autosnap.ui.screens.AddClientCarScreen
 import com.pandoscorp.autosnap.ui.screens.AddServiceForm
 import com.pandoscorp.autosnap.ui.screens.AutoServiceChooseScreen
 import com.pandoscorp.autosnap.ui.screens.ChatForm
@@ -34,6 +35,7 @@ import com.pandoscorp.autosnap.ui.screens.RegistrationForm
 import com.pandoscorp.autosnap.ui.screens.ServiceChooseForm
 import com.pandoscorp.autosnap.ui.screens.SheduleForm
 import com.pandoscorp.autosnap.ui.screens.WelcomeForm
+import com.pandoscorp.autosnap.ui.viewmodel.AddClientCarViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
@@ -60,6 +62,7 @@ fun AppNavigation() {
     val serviceViewModel = ServiceViewModel()
     val mainViewModel = MainViewModel()
     val autoServiceViewChooseModel = AutoServiceChooseViewModel()
+    val addClientCarViewModel = AddClientCarViewModel()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -71,7 +74,7 @@ fun AppNavigation() {
 
 
 
-    NavHost(navController = navController, startDestination = ScreenObject.ClientMainScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.RegScreen.route) {
         composable(ScreenObject.MainScreen.route) {
             MainForm(navController, mainViewModel)
         }
@@ -86,6 +89,9 @@ fun AppNavigation() {
         }
         composable(ScreenObject.ClientsScreen.route) {
             ClientsForm(navController, clientViewModel)
+        }
+        composable(ScreenObject.ClientMainScreen.route) {
+            ClientMainScreen(navController, clientsMainViewModel)
         }
         composable("clients/selection") {
             ClientsForm(
@@ -114,8 +120,12 @@ fun AppNavigation() {
         }
 
         composable(ScreenObject.AutoServiceChoose.route) {
-            AutoServiceChooseScreen(navController, autoServiceViewChooseModel)
+            AutoServiceChooseScreen(navController, autoServiceViewChooseModel, clientsMainViewModel)
         }
+        composable(ScreenObject.AddClientCarScreen.route) {
+            AddClientCarScreen(navController, addClientCarViewModel)
+        }
+
         composable(ScreenObject.ProfileScreen.route + "/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             if (userId.isNotEmpty()) {

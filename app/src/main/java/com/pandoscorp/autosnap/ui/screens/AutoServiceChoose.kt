@@ -1,5 +1,6 @@
 ﻿package com.pandoscorp.autosnap.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,12 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.ui.viewmodel.AutoServiceChooseViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AutoServiceChooseScreen(
     navController: NavHostController,
-    viewModel: AutoServiceChooseViewModel
+    viewModel: AutoServiceChooseViewModel,
+    clientViewModel: ClientsMainViewModel
 ) {
     val services by viewModel.services.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -73,10 +76,12 @@ fun AutoServiceChooseScreen(
                     service.username.contains(searchQuery, ignoreCase = true) ||
                             service.address?.contains(searchQuery, ignoreCase = true) ?: false
                 }) { service ->
+                    Log.d("AutoServiceScreen", "Displaying ${services.size} services, filtered")
                     ServiceCard(
                         service = service,
                         onClick = {
-                            navController.navigate("serviceDetails/${service.id}")
+                            clientViewModel.setSelectedService(service)
+                            navController.popBackStack() // Возвращаемся на предыдущий экран
                         }
                     )
                 }
@@ -167,12 +172,3 @@ private fun ServiceCard(
         }
     }
 }
-
-// Модель данных для автосервиса
-data class AutoService(
-    val id: String,
-    val username: String?,
-    val address: String?,
-    val phone: String?,
-    val email: String?
-)

@@ -1,7 +1,5 @@
 ﻿package com.pandoscorp.autosnap.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.model.Appointment
 import com.pandoscorp.autosnap.model.Car
+import com.pandoscorp.autosnap.model.User
+import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.components.*
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
 import java.util.*
@@ -39,6 +41,9 @@ fun ClientMainScreen(
     val cars by viewModel.cars.collectAsState()
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsState()
     val history by viewModel.history.collectAsState()
+    val selectedService by viewModel.selectedService.collectAsState()
+
+
 
     Scaffold(
         topBar = {
@@ -77,7 +82,18 @@ fun ClientMainScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // === Статистика клиента ===
+            // Блок выбранного сервиса
+            selectedService?.let { service ->
+                item {
+                    SelectedServiceCard(
+                        service = service,
+                        onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
+                        onClearClick = { viewModel.clearSelectedService() }
+                    )
+                }
+            }
+
+            // ... остальной существующий код (статистика, автомобили, записи)
             item {
                 StatisticCard(
                     stats = listOf(
@@ -102,7 +118,7 @@ fun ClientMainScreen(
                     )
                     if (cars.isNotEmpty()) {
                         TextButton(
-                            onClick = { navController.navigate("addCar") }
+                            onClick = { navController.navigate(ScreenObject.AddClientCarScreen.route) }
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Добавить")
                             Spacer(modifier = Modifier.width(4.dp))
@@ -119,7 +135,7 @@ fun ClientMainScreen(
                         title = "Нет автомобилей",
                         description = "Добавьте свой автомобиль для записи в сервис",
                         buttonText = "Создать автомобиль",
-                        onButtonClick = { navController.navigate("addCar") }
+                        onButtonClick = { navController.navigate(ScreenObject.AddClientCarScreen.route) }
                     )
                 }
             } else {
@@ -143,13 +159,23 @@ fun ClientMainScreen(
 
             if (upcomingAppointments.isEmpty()) {
                 item {
-                    EmptyStateCard(
-                        icon = Icons.Default.DateRange,
-                        title = "Нет записей",
-                        description = "Запишитесь в автосервис для обслуживания",
-                        buttonText = "Выбрать автосервис",
-                        onButtonClick = { navController.navigate("selectService") }
-                    )
+                    if(selectedService != null){
+                        selectedService?.let { service ->
+                                SelectedServiceCard(
+                                    service = service,
+                                    onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
+                                    onClearClick = { viewModel.clearSelectedService() }
+                                )
+                            }
+                    }else{
+                        EmptyStateCard(
+                            icon = Icons.Default.DateRange,
+                            title = "Нет записей",
+                            description = "Запишитесь в автосервис для обслуживания",
+                            buttonText = "Выбрать автосервис",
+                            onButtonClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) }
+                        )
+                    }
                 }
             } else {
                 items(upcomingAppointments) { appointment ->
@@ -328,6 +354,87 @@ private fun EmptyStateCard(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(buttonText)
+            }
+        }
+    }
+}
+
+@Composable
+fun SelectedServiceCard(
+    service: User,
+    onEditClick: () -> Unit,
+    onClearClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Текущий автосервис",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = service.username ?: "Автосервис",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Адрес",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = service.address ?: "Адрес не указан",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = "Телефон",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = service.phone ?: "Телефон не указан",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TextButton(
+                    onClick = onClearClick,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Очистить выбор")
+                }
+
+                TextButton(onClick = onEditClick) {
+                    Text("Сменить сервис")
+                }
             }
         }
     }
