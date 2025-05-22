@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.navigation.ScreenObject
-import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientViewModel
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -45,7 +45,7 @@ import com.pandoscorp.autosnap.model.Client
 @Composable
 fun ClientsForm(
     navController: NavHostController,
-    viewModel: ClientsViewModel,
+    viewModel: ClientViewModel,
     forSelection: Boolean = false,
     onClientSelected: (Client) -> Unit = {}
 ) {

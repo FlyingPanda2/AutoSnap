@@ -21,9 +21,10 @@ import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.repository.ClientRepository
 import com.pandoscorp.autosnap.repository.UserRepository
 import com.pandoscorp.autosnap.ui.screens.AddServiceForm
+import com.pandoscorp.autosnap.ui.screens.AutoServiceChooseScreen
 import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientCarsForm
-import com.pandoscorp.autosnap.ui.screens.ClientMainForm
+import com.pandoscorp.autosnap.ui.screens.ClientMainScreen
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
 import com.pandoscorp.autosnap.ui.screens.MainForm
@@ -36,7 +37,9 @@ import com.pandoscorp.autosnap.ui.screens.WelcomeForm
 import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
-import com.pandoscorp.autosnap.ui.viewmodel.ClientsViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.AutoServiceChooseViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.MainViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ServiceViewModel
 
@@ -50,11 +53,13 @@ fun AppNavigation() {
     val userRepository = UserRepository()
     val authViewModel = AuthViewModel(userRepository, clientRepository)
     val addClientViewModel = AddClientViewModel()
-    val clientViewModel = ClientsViewModel()
+    val clientViewModel = ClientViewModel()
+    val clientsMainViewModel = ClientsMainViewModel()
     val appointmentSharedViewModel = AppointmentSharedViewModel()
     val addServiceViewModel = AddServiceViewModel()
     val serviceViewModel = ServiceViewModel()
     val mainViewModel = MainViewModel()
+    val autoServiceViewChooseModel = AutoServiceChooseViewModel()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -66,7 +71,7 @@ fun AppNavigation() {
 
 
 
-    NavHost(navController = navController, startDestination = ScreenObject.MainScreen.route) {
+    NavHost(navController = navController, startDestination = ScreenObject.ClientMainScreen.route) {
         composable(ScreenObject.MainScreen.route) {
             MainForm(navController, mainViewModel)
         }
@@ -107,8 +112,9 @@ fun AppNavigation() {
         composable(ScreenObject.AddClientScreen.route) {
             AddClientForm(navController, addClientViewModel)
         }
-        composable(ScreenObject.ClientMainScreen.route) {
-            ClientMainForm(navController)
+
+        composable(ScreenObject.AutoServiceChoose.route) {
+            AutoServiceChooseScreen(navController, autoServiceViewChooseModel)
         }
         composable(ScreenObject.ProfileScreen.route + "/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""

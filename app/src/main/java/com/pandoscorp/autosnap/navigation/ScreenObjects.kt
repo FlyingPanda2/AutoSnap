@@ -15,6 +15,7 @@ sealed class ScreenObject(val route: String) {
     object ServiceChooseScreen : ScreenObject("ServiceChooseForm")
     object AddServiceScreen : ScreenObject("AddServiceForm")
     object ClientMainScreen : ScreenObject("ClientMainForm")
+    object AutoServiceChoose : ScreenObject("AutoServiceChooseScreen")
     object SheduleScreen : ScreenObject("schedule?forDateSelection={forDateSelection}") {
         fun createRoute(forDateSelection: Boolean): String {
             return "schedule?forDateSelection=$forDateSelection"

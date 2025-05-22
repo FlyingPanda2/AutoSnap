@@ -6,7 +6,7 @@ import com.pandoscorp.autosnap.repository.ClientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class ClientsViewModel : ViewModel() {
+class ClientViewModel : ViewModel() {
     private val repository = ClientRepository()
 
     private val _clients = MutableStateFlow<List<Client>>(emptyList())
