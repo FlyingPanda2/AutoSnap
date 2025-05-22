@@ -111,7 +111,7 @@ class ClientCreateAppointmentViewModel : ViewModel() {
                     id = appointmentRef.key ?: "",
                     clientId = userId,
                     carId = selectedCarId.value,
-                    serviceIds = _selectedServices.value.toList(), // Используем существующее поле
+                    serviceIds = _selectedServices.value.toList(),
                     date = selectedDate.value,
                     time = selectedTime.value,
                     totalPrice = calculateTotalPrice(serviceCenterId),
@@ -120,13 +120,18 @@ class ClientCreateAppointmentViewModel : ViewModel() {
                     serviceCenterId = serviceCenterId
                 )
 
+                // Сначала сохраняем в общий список
                 appointmentRef.setValue(appointment).await()
 
-                // И в ветку клиента (если нужно)
+                // Затем в ветку клиента
                 database.getReference("clients/$userId/appointments/${appointment.id}")
                     .setValue(appointment).await()
 
                 _success.value = true
+
+                // Очищаем выбранные значения
+                resetState()
+
             } catch (e: Exception) {
                 _error.value = "Ошибка: ${e.message}"
             } finally {

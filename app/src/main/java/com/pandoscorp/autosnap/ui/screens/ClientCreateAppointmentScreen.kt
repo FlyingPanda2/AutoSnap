@@ -199,6 +199,7 @@ fun ClientCreateAppointmentScreen(
                         onClick = {
                             selectedService?.id?.let { serviceCenterId ->
                                 viewModel.createAppointment(serviceCenterId)
+                                navController.popBackStack()
                             }
                         },
                         modifier = Modifier

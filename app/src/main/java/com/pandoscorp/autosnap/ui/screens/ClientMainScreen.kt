@@ -1,8 +1,11 @@
 ﻿package com.pandoscorp.autosnap.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -52,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.model.Appointment
 import com.pandoscorp.autosnap.model.Car
+import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
@@ -66,6 +70,11 @@ fun ClientMainScreen(
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsState()
     val history by viewModel.history.collectAsState()
     val selectedService by viewModel.selectedService.collectAsState()
+
+    val carsMap by viewModel.carsMap.collectAsState()
+    val servicesMap by viewModel.servicesMap.collectAsState()
+
+    val serviceCentersMap by viewModel.serviceCentersMap.collectAsState()
 
     LaunchedEffect(cars) {
         Log.d("CarDebug", "Cars in UI: ${cars.size}")
@@ -113,19 +122,16 @@ fun ClientMainScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // Блок выбранного сервиса
-            selectedService?.let { service ->
-                item {
-                    SelectedServiceCard(
-                        service = service,
-                        onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
-                        onClearClick = { viewModel.clearSelectedService() },
-                        navController = navController
-                    )
-                }
+            item {
+                ServiceSelectionCard(
+                    selectedService = selectedService,
+                    onSelectService = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
+                    onClearService = { viewModel.clearSelectedService() },
+                    navController = navController
+                )
             }
 
-            // ... остальной существующий код (статистика, автомобили, записи)
+            // Статистика
             item {
                 StatisticCard(
                     stats = listOf(
@@ -195,29 +201,25 @@ fun ClientMainScreen(
 
             if (upcomingAppointments.isEmpty()) {
                 item {
-                    if (selectedService != null) {
-                        selectedService?.let { service ->
-                            SelectedServiceCard(
-                                service = service,
-                                onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
-                                onClearClick = { viewModel.clearSelectedService() },
-                                navController = navController
-                            )
-                        }
-                    } else {
-                        EmptyStateCard(
-                            icon = Icons.Default.DateRange,
-                            title = "Нет записей",
-                            description = "Запишитесь в автосервис для обслуживания",
-                            buttonText = "Выбрать автосервис",
-                            onButtonClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) }
-                        )
-                    }
+                    EmptyStateCard(
+                        icon = Icons.Default.DateRange,
+                        title = "Нет активных записей",
+                        description = "Вы можете записаться на услугу в выбранном автосервисе",
+                        buttonText = "Записаться",
+                        onButtonClick = { navController.navigate(ScreenObject.ClientCreateAppointmentScreen.route) }
+                    )
                 }
             } else {
-                items(upcomingAppointments) { appointment ->
+                items(upcomingAppointments) { (appointment, isPending) ->
+                    val car = carsMap[appointment.carId]
+                    val services = appointment.serviceIds.mapNotNull { servicesMap[it] }
+                    val serviceCenter = serviceCentersMap[appointment.serviceCenterId] // Получаем автосервис
+
                     AppointmentCard(
-                        appointment = appointment,
+                        appointmentPair = Pair(appointment, isPending),
+                        car = car,
+                        services = services,
+                        serviceCenter = serviceCenter, // Передаем в карточку
                         onClick = { navController.navigate("appointmentDetails/${appointment.id}") }
                     )
                 }
@@ -284,6 +286,81 @@ fun StatisticCard(stats: List<StatItem>) {
 }
 
 @Composable
+fun ServiceSelectionCard(
+    selectedService: User?,
+    onSelectService: () -> Unit,
+    onClearService: () -> Unit,
+    navController: NavHostController
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (selectedService != null) {
+                // Отображаем информацию о выбранном сервисе
+                Text(
+                    text = selectedService.username ?: "Автосервис",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.LocationOn, contentDescription = "Адрес")
+                    Text(selectedService.address ?: "Адрес не указан")
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Phone, contentDescription = "Телефон")
+                    Text(selectedService.phone ?: "Телефон не указан")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Кнопки для существующего сервиса
+                Button(
+                    onClick = { navController.navigate(ScreenObject.ClientCreateAppointmentScreen.route) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Записаться на услугу")
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(onClick = onSelectService) {
+                        Text("Сменить сервис")
+                    }
+                    TextButton(onClick = onClearService) {
+                        Text("Очистить")
+                    }
+                }
+            } else {
+                // Состояние, когда сервис не выбран
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Автосервис не выбран",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onSelectService,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Выбрать автосервис")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun CarCard(car: Car, navController: NavHostController) {
     Card(
         modifier = Modifier
@@ -302,23 +379,117 @@ fun CarCard(car: Car, navController: NavHostController) {
 }
 
 @Composable
-fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
+fun AppointmentCard(
+    appointmentPair: Pair<Appointment, Boolean>,
+    car: Car?,
+    services: List<Service>,
+    serviceCenter: User?, // Добавляем параметр автосервиса
+    onClick: () -> Unit
+) {
+    val (appointment, isPending) = appointmentPair
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                isPending -> Color(0xFFFFF8E1)
+                else -> Color(0xFFE8F5E9)
+            }
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isPending) Color(0xFFFFA000) else Color(0xFF4CAF50)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Строка статуса (оставляем как было)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("📅 ${appointment.date}", fontWeight = FontWeight.Bold)
-                Text("${appointment.totalPrice} ₽", color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = "📅 ${appointment.date} ⏰ ${appointment.time}",
+                    fontWeight = FontWeight.Bold,
+                    color = if (isPending) Color(0xFFF57F17) else Color(0xFF2E7D32)
+                )
+                StatusBadge(isPending = isPending)
             }
+
+            // Добавляем блок с автосервисом
+            serviceCenter?.let { center ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Column {
+                    Text(
+                        text = "🏢 ${center.username ?: "Автосервис"}",
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = center.address ?: "Адрес не указан",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            // Блок с автомобилем (оставляем как было)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("⏰ ${appointment.time}")
+            car?.let {
+                Text(
+                    text = "🚗 ${it.brand} ${it.model} (${it.year})",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Блок с услугами (оставляем как было)
+            Spacer(modifier = Modifier.height(4.dp))
+            if (services.isNotEmpty()) {
+                Column {
+                    Text(
+                        text = "Услуги:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    services.forEach { service ->
+                        Text(
+                            text = "• ${service.name} - ${service.price} ₽",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+
+            // Итоговая цена (оставляем как было)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Итого: ${appointment.totalPrice} ₽",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
         }
+    }
+}
+
+@Composable
+private fun StatusBadge(isPending: Boolean) {
+    Box(
+        modifier = Modifier
+            .background(
+                color = if (isPending) Color(0xFFFFC107) else Color(0xFF4CAF50),
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = if (isPending) "На подтверждении" else "Подтверждено",
+            color = Color.White,
+            fontSize = 12.sp
+        )
     }
 }
 
@@ -398,27 +569,6 @@ fun SelectedServiceCard(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Текущий автосервис",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Записаться",
-                    modifier = Modifier
-                        .clickable { navController.navigate(ScreenObject.ClientCreateAppointmentScreen.route) },
-                    color = Color.Green,
-                    fontWeight = FontWeight.Bold
-                    )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = service.username ?: "Автосервис",
                 style = MaterialTheme.typography.titleLarge
@@ -456,12 +606,31 @@ fun SelectedServiceCard(
                 )
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Основная кнопка для записи
+            Button(
+                onClick = { navController.navigate(ScreenObject.ClientCreateAppointmentScreen.route) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Записаться на услугу", fontWeight = FontWeight.Bold)
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Вторичные действия
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TextButton(onClick = onEditClick) {
+                    Text("Сменить сервис")
+                }
 
-
-            TextButton(onClick = onEditClick) {
-                Text("Сменить сервис")
+                TextButton(onClick = onClearClick) {
+                    Text("Очистить")
+                }
             }
         }
     }
