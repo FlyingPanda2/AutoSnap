@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.ui.viewmodel.AddClientCarViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,10 @@ fun AddClientCarScreen(
 
     LaunchedEffect(success) {
         if (success) {
+            // Даем время на обновление данных
+            delay(300)
             navController.popBackStack()
+            viewModel.resetState()
         }
     }
 

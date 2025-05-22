@@ -36,6 +36,21 @@ class UserRepository {
         }
     }
 
+    suspend fun isUserClient(userId: String): Boolean {
+        return try {
+            val clientRef = FirebaseDatabase.getInstance()
+                .getReference("clients/$userId")
+            val snapshot = clientRef.get().await()
+            snapshot.exists()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun generateNewServiceId(): String {
+        return database.getReference("services").push().key ?: throw Exception("Failed to generate ID")
+    }
+
     //Вход пользователя
     suspend fun loginUser(email: String, password: String): String {
         try {

@@ -12,5 +12,6 @@ data class Appointment(
     val time: String = "",
     val totalPrice: Int = 0,
     val discountPercent: Int = 0,
-    val createdAt: String = ""
+    val createdAt: String = "",
+    val serviceCenterId: String = ""
 )

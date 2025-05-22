@@ -5,7 +5,6 @@ data class User(
     val username: String = "",
     val email: String = "",
     val phone: String = "",
-    val imageUrl: String? = null,
     val address: String = "",
     val clients: List<Client> = emptyList(),
     val services: Map<String, Service> = emptyMap()

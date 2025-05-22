@@ -257,12 +257,22 @@ fun RegistrationForm(
                     return@Button
                 }
 
-                val user = User(
-                    id = "", // Будет заполнено при регистрации
-                    username = if (userType == "client") "$firstName $lastName" else serviceName,
-                    email = email,
-                    phone = phone,
-                )
+                val user = if (userType == "client") {
+                    User(
+                        username = "$firstName $lastName",
+                        email = email,
+                        phone = phone,
+                        address = "" // Для клиента address не обязателен
+                    )
+                } else {
+                    User(
+                        username = serviceName,
+                        email = email,
+                        phone = phone,
+                        address = address, // Для автосервиса address обязателен
+                        services = emptyMap() // Инициализируем услуги
+                    )
+                }
 
                 val clientData = if (userType == "client") {
                     Client(
@@ -271,18 +281,12 @@ fun RegistrationForm(
                         birthdate = birthDate,
                         email = email,
                         phone = phone,
+                        note = ""
                     )
                 } else null
 
                 authViewModel.registerUser(user, password, clientData)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp),
-            colors = ButtonDefaults.buttonColors(
-                contentColor = Color.White,
-                containerColor = Color.Blue
-            )
+            }
         ) {
             Text("Зарегистрироваться")
         }

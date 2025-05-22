@@ -25,6 +25,7 @@ import com.pandoscorp.autosnap.ui.screens.AddServiceForm
 import com.pandoscorp.autosnap.ui.screens.AutoServiceChooseScreen
 import com.pandoscorp.autosnap.ui.screens.ChatForm
 import com.pandoscorp.autosnap.ui.screens.ClientCarsForm
+import com.pandoscorp.autosnap.ui.screens.ClientCreateAppointmentScreen
 import com.pandoscorp.autosnap.ui.screens.ClientMainScreen
 import com.pandoscorp.autosnap.ui.screens.ClientsForm
 import com.pandoscorp.autosnap.ui.screens.LoginForm
@@ -40,6 +41,7 @@ import com.pandoscorp.autosnap.ui.viewmodel.AddServiceViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AuthViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.AutoServiceChooseViewModel
+import com.pandoscorp.autosnap.ui.viewmodel.ClientCreateAppointmentViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.MainViewModel
@@ -63,6 +65,7 @@ fun AppNavigation() {
     val mainViewModel = MainViewModel()
     val autoServiceViewChooseModel = AutoServiceChooseViewModel()
     val addClientCarViewModel = AddClientCarViewModel()
+    val clientCreateAppointmentViewModel = ClientCreateAppointmentViewModel()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -81,6 +84,10 @@ fun AppNavigation() {
         composable(ScreenObject.RegScreen.route) {
             RegistrationForm(navController, authViewModel)
         }
+        composable(ScreenObject.ClientCreateAppointmentScreen.route) {
+            ClientCreateAppointmentScreen(navController, clientCreateAppointmentViewModel, clientsMainViewModel)
+        }
+
         composable(ScreenObject.LoginScreen.route) {
             LoginForm(navController, authViewModel)
         }

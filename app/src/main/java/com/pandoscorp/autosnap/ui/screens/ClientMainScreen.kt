@@ -1,7 +1,18 @@
 ﻿package com.pandoscorp.autosnap.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,13 +23,28 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.modifier.modifierLocalProvider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,9 +54,7 @@ import com.pandoscorp.autosnap.model.Appointment
 import com.pandoscorp.autosnap.model.Car
 import com.pandoscorp.autosnap.model.User
 import com.pandoscorp.autosnap.navigation.ScreenObject
-import com.pandoscorp.autosnap.ui.components.*
 import com.pandoscorp.autosnap.ui.viewmodel.ClientsMainViewModel
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +66,13 @@ fun ClientMainScreen(
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsState()
     val history by viewModel.history.collectAsState()
     val selectedService by viewModel.selectedService.collectAsState()
+
+    LaunchedEffect(cars) {
+        Log.d("CarDebug", "Cars in UI: ${cars.size}")
+        cars.forEach { car ->
+            Log.d("CarDebug", "Car: ${car.brand} ${car.model} (ID: ${car.id})")
+        }
+    }
 
 
 
@@ -88,7 +119,8 @@ fun ClientMainScreen(
                     SelectedServiceCard(
                         service = service,
                         onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
-                        onClearClick = { viewModel.clearSelectedService() }
+                        onClearClick = { viewModel.clearSelectedService() },
+                        navController = navController
                     )
                 }
             }
@@ -97,7 +129,11 @@ fun ClientMainScreen(
             item {
                 StatisticCard(
                     stats = listOf(
-                        StatItem("Записей", upcomingAppointments.size.toString(), Icons.Default.DateRange),
+                        StatItem(
+                            "Записей",
+                            upcomingAppointments.size.toString(),
+                            Icons.Default.DateRange
+                        ),
                         StatItem("Автомобилей", cars.size.toString(), Icons.Default.Build),
                         StatItem("Потрачено", calculateTotalSpent(history), Icons.Default.Star)
                     )
@@ -143,7 +179,7 @@ fun ClientMainScreen(
                     CarCard(
                         car = car,
                         navController = navController
-                        )
+                    )
                 }
             }
 
@@ -159,15 +195,16 @@ fun ClientMainScreen(
 
             if (upcomingAppointments.isEmpty()) {
                 item {
-                    if(selectedService != null){
+                    if (selectedService != null) {
                         selectedService?.let { service ->
-                                SelectedServiceCard(
-                                    service = service,
-                                    onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
-                                    onClearClick = { viewModel.clearSelectedService() }
-                                )
-                            }
-                    }else{
+                            SelectedServiceCard(
+                                service = service,
+                                onEditClick = { navController.navigate(ScreenObject.AutoServiceChoose.route) },
+                                onClearClick = { viewModel.clearSelectedService() },
+                                navController = navController
+                            )
+                        }
+                    } else {
                         EmptyStateCard(
                             icon = Icons.Default.DateRange,
                             title = "Нет записей",
@@ -225,7 +262,11 @@ data class StatItem(
 fun StatisticCard(stats: List<StatItem>) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Статистика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "Статистика",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
 
             stats.forEach { stat ->
                 Row(
@@ -243,27 +284,11 @@ fun StatisticCard(stats: List<StatItem>) {
 }
 
 @Composable
-fun HeaderWithButton(title: String, buttonText: String, onButtonClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        TextButton(onClick = onButtonClick) {
-            Icon(Icons.Default.Add, contentDescription = "Добавить")
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(buttonText)
-        }
-    }
-}
-
-@Composable
 fun CarCard(car: Car, navController: NavHostController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate("carDetails/${car.id}") }
+            .clickable { }
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(imageVector = Icons.Default.Build, contentDescription = "Автомобиль")
@@ -362,6 +387,7 @@ private fun EmptyStateCard(
 @Composable
 fun SelectedServiceCard(
     service: User,
+    navController: NavHostController,
     onEditClick: () -> Unit,
     onClearClick: () -> Unit
 ) {
@@ -372,11 +398,24 @@ fun SelectedServiceCard(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Текущий автосервис",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Текущий автосервис",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Записаться",
+                    modifier = Modifier
+                        .clickable { navController.navigate(ScreenObject.ClientCreateAppointmentScreen.route) },
+                    color = Color.Green,
+                    fontWeight = FontWeight.Bold
+                    )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -419,22 +458,10 @@ fun SelectedServiceCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TextButton(
-                    onClick = onClearClick,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Очистить выбор")
-                }
 
-                TextButton(onClick = onEditClick) {
-                    Text("Сменить сервис")
-                }
+
+            TextButton(onClick = onEditClick) {
+                Text("Сменить сервис")
             }
         }
     }

@@ -1,10 +1,14 @@
 ﻿package com.pandoscorp.autosnap.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.pandoscorp.autosnap.model.Car
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -12,8 +16,7 @@ import kotlinx.coroutines.tasks.await
 
 class AddClientCarViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
-    private val databaseUrl = "https://autosnap-c15c0-default-rtdb.europe-west1.firebasedatabase.app"
-    private val database = FirebaseDatabase.getInstance(databaseUrl)
+    private val database = Firebase.database("https://autosnap-c15c0-default-rtdb.europe-west1.firebasedatabase.app")
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -42,14 +45,12 @@ class AddClientCarViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid ?: throw Exception("Пользователь не авторизован")
-                val clientRef = database.getReference("clients/$userId")
+                val carsRef = database.getReference("clients/$userId/cars")
 
-                // Получаем текущего клиента
-                val clientSnapshot = clientRef.get().await()
-
-                // Создаем новый автомобиль
+                // Создаем новый автомобиль с автоматическим ID
+                val newCarRef = carsRef.push()
                 val newCar = Car(
-                    id = "${System.currentTimeMillis()}",
+                    id = newCarRef.key ?: "",
                     brand = brand.trim(),
                     model = model.trim(),
                     year = year.trim(),
@@ -57,19 +58,15 @@ class AddClientCarViewModel : ViewModel() {
                     horsePower = horsePower.trim()
                 )
 
-                // Обновляем список автомобилей клиента
-                val currentCars = if (clientSnapshot.hasChild("cars")) {
-                    clientSnapshot.child("cars").getValue(MutableMap::class.java)?.toMutableMap() ?: mutableMapOf()
-                } else {
-                    mutableMapOf()
-                }
+                // Сохраняем автомобиль напрямую по сгенерированному пути
+                newCarRef.setValue(newCar).await()
 
-                currentCars[newCar.id] = newCar
-                clientRef.child("cars").setValue(currentCars).await()
+                delay(500)
 
                 _success.value = true
             } catch (e: Exception) {
                 _errorMessage.value = "Ошибка при добавлении: ${e.localizedMessage}"
+                Log.e("AddCar", "Error adding car", e)
             } finally {
                 _isLoading.value = false
             }

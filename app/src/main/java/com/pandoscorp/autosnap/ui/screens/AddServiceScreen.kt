@@ -61,7 +61,7 @@ fun AddServiceForm(
                                     price = servicePrice.toIntOrNull() ?: 0,
                                     description = serviceDescription
                                 )
-                                viewModel.addServiceToUser(userId, service) { success ->
+                                viewModel.addServiceToUser(service) { success ->
                                     if (success) {
                                         navController.popBackStack()
                                     }

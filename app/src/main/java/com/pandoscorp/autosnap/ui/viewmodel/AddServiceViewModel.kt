@@ -3,6 +3,7 @@
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.pandoscorp.autosnap.model.Service
 import com.pandoscorp.autosnap.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,13 +23,21 @@ class AddServiceViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun addServiceToUser(userId: String, service: Service, onResult: (Boolean) -> Unit) {
+    private val auth = FirebaseAuth.getInstance()
+
+    fun addServiceToUser(service: Service, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val success = repository.addUserService(userId, service)
+                val currentUserId = auth.currentUser?.uid
+                    ?: throw Exception("User not authenticated")
+
+                // Генерируем новый ID перед добавлением
+                val newService = service.copy(id = repository.generateNewServiceId())
+
+                val success = repository.addUserService(currentUserId, newService)
                 if (success) {
-                    loadUserServices(userId)
+                    loadUserServices()
                 }
                 onResult(success)
             } catch (e: Exception) {
@@ -41,17 +50,20 @@ class AddServiceViewModel(
         }
     }
 
-    fun loadUserServices(userId: String) {
+    fun loadUserServices() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
                 _errorMessage.value = null
 
-                val services = repository.getUserServices(userId)
+                val currentUserId = auth.currentUser?.uid
+                    ?: throw Exception("User not authenticated")
+
+                val services = repository.getUserServices(currentUserId)
                 _userServices.value = services
 
                 if (services.isEmpty()) {
-                    Log.d("AddServiceViewModel", "No services found for user $userId")
+                    Log.d("AddServiceViewModel", "No services found for user $currentUserId")
                 }
             } catch (e: Exception) {
                 Log.e("AddServiceViewModel", "Error loading services", e)
@@ -60,10 +72,11 @@ class AddServiceViewModel(
             } finally {
                 _isLoading.value = false
             }
-        }
-    }
 
-    fun clearErrorMessage() {
-        _errorMessage.value = null
+
+            fun clearErrorMessage() {
+                _errorMessage.value = null
+            }
+        }
     }
 }

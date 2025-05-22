@@ -53,8 +53,14 @@ fun LoginForm(
     val errorState by authViewModel.errorState.collectAsState()
 
     LaunchedEffect(loginState) {
-        if (loginState.isNotEmpty()) {
-            if (loginState == "Вход выполнен успешно") {
+        when (loginState) {
+            "CLIENT_LOGIN_SUCCESS" -> {
+                navController.navigate(ScreenObject.ClientMainScreen.route) {
+                    popUpTo(ScreenObject.LoginScreen.route) { inclusive = true }
+                }
+                authViewModel.clearStates()
+            }
+            "SERVICE_LOGIN_SUCCESS" -> {
                 navController.navigate(ScreenObject.MainScreen.route) {
                     popUpTo(ScreenObject.LoginScreen.route) { inclusive = true }
                 }
@@ -84,7 +90,7 @@ fun LoginForm(
 
 
         OutlinedTextField(
-            value = "assd1994@bk.ru",
+            value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier
@@ -95,7 +101,7 @@ fun LoginForm(
         )
 
         OutlinedTextField(
-            value = "123456789",
+            value = password,
             onValueChange = { password = it },
             label = { Text("Пароль") },
             modifier = Modifier
