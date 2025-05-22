@@ -58,6 +58,120 @@ class AppointmentSharedViewModel: ViewModel() {
     private val _startTime = MutableStateFlow<LocalTime?>(null)
     val startTime: StateFlow<LocalTime?> = _startTime
 
+    private val _serviceCenterAppointments = MutableStateFlow<List<Appointment>>(emptyList())
+    private val _personalAppointments = MutableStateFlow<List<Appointment>>(emptyList())
+
+    // Функция для проверки, является ли запись сервисной
+    fun isServiceCenterAppointment(appointment: Appointment): Boolean {
+        return appointment.serviceCenterId.isNotEmpty()
+    }
+
+    suspend fun loadAppointmentClient(appointmentId: String): Client? {
+        return try {
+            // Получаем clientId из записи
+            val snapshot = database.getReference("appointments/$appointmentId").get().await()
+            val clientId = snapshot.child("clientId").value as? String ?: return null
+
+            // Загружаем данные клиента
+            database.getReference("clients/$clientId").get().await()
+                .getValue(Client::class.java)
+                ?.copy(id = clientId)
+        } catch (e: Exception) {
+            Log.e("Appointments", "Error loading appointment client", e)
+            null
+        }
+    }
+
+    suspend fun loadAppointmentCar(appointmentId: String): Car? {
+        return try {
+            // Получаем clientId и carId из записи
+            val snapshot = database.getReference("appointments/$appointmentId").get().await()
+            val clientId = snapshot.child("clientId").value as? String ?: return null
+            val carId = snapshot.child("carId").value as? String ?: return null
+
+            // Загружаем данные автомобиля
+            database.getReference("clients/$clientId/cars/$carId").get().await()
+                .getValue(Car::class.java)
+                ?.copy(id = carId)
+        } catch (e: Exception) {
+            Log.e("Appointments", "Error loading appointment car", e)
+            null
+        }
+    }
+
+    private val _appointments = MutableStateFlow<List<Appointment>>(emptyList())
+    val appointments: StateFlow<List<Appointment>> = _appointments.asStateFlow()
+
+    // 2. Улучшенная функция загрузки
+    fun loadAppointmentsForDate(date: SimpleDate) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: run {
+                    _appointments.value = emptyList()
+                    return@launch
+                }
+
+                val dbDateFormat = "${date.day.toString().padStart(2, '0')}.${date.month.toString().padStart(2, '0')}.${date.year}"
+
+                // Загрузка сервисных записей
+                database.getReference("appointments")
+                    .orderByChild("date")
+                    .equalTo(dbDateFormat)
+                    .get()
+                    .await()
+                    .children
+                    .mapNotNull { it.getValue(Appointment::class.java) }
+                    .filter { it.serviceCenterId == userId }
+                    .also { serviceApps ->
+                        // Загрузка личных записей
+                        val personalApps = database.getReference("users/$userId/appointments")
+                            .orderByChild("date")
+                            .equalTo(dbDateFormat)
+                            .get()
+                            .await()
+                            .children
+                            .mapNotNull { it.getValue(Appointment::class.java) }
+
+                        // Обновление StateFlow в основном потоке
+                        withContext(Dispatchers.Main) {
+                            _appointments.value = serviceApps + personalApps
+                            Log.d("Appointments", "UI should update with ${_appointments.value.size} items")
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e("Appointments", "Error: ${e.message}")
+                _appointments.value = emptyList()
+            }
+        }
+    }
+
+    // Функции для принятия/отклонения записей
+    fun acceptAppointment(appointment: Appointment, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                database.getReference("appointments/${appointment.id}/status")
+                    .setValue("accepted")
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onError(e.message ?: "Ошибка принятия записи") }
+            } catch (e: Exception) {
+                onError(e.message ?: "Ошибка принятия записи")
+            }
+        }
+    }
+
+    fun rejectAppointment(appointment: Appointment, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                database.getReference("appointments/${appointment.id}/status")
+                    .setValue("rejected")
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onError(e.message ?: "Ошибка отклонения записи") }
+            } catch (e: Exception) {
+                onError(e.message ?: "Ошибка отклонения записи")
+            }
+        }
+    }
+
     fun updateDuration(hours: Int, minutes: Int) {
         _durationHours.value = hours
         _durationMinutes.value = minutes
@@ -270,49 +384,14 @@ class AppointmentSharedViewModel: ViewModel() {
         }
     }
 
-    private val _appointments = MutableStateFlow<List<Appointment>>(emptyList())
-    val appointments: StateFlow<List<Appointment>> = _appointments
-
-    fun loadAppointmentsForDate(date: SimpleDate) {
-        viewModelScope.launch {
-            try {
-                val userId = auth.currentUser?.uid ?: return@launch
-                // Формат даты как в базе: "2025-5-21"
-                val dateStr = "${date.year}-${if (date.month < 10) "0${date.month}" else date.month}-${if (date.day < 10) "0${date.day}" else date.day}"
-
-                Log.d("Appointments", "Loading appointments for date: $dateStr")
-
-                // Правильный путь к записям
-                database.getReference("users/$userId/appointments")
-                    .orderByChild("date")
-                    .equalTo(dateStr)
-                    .get()
-                    .addOnSuccessListener { snapshot ->
-                        Log.d("Appointments", "Snapshot: ${snapshot.value}")
-
-                        val loadedAppointments = snapshot.children.mapNotNull { child ->
-                            try {
-                                val appointment = child.getValue(Appointment::class.java)
-                                Log.d("Appointments", "Found appointment: ${appointment?.id}")
-                                appointment?.copy(id = child.key ?: "")
-                            } catch (e: Exception) {
-                                Log.e("Appointments", "Error parsing appointment", e)
-                                null
-                            }
-                        }
-
-                        Log.d("Appointments", "Loaded ${loadedAppointments.size} appointments")
-                        _appointments.value = loadedAppointments
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Appointments", "Error loading appointments", e)
-                        // Показываем пользователю сообщение об ошибке
-                        _appointments.value = emptyList()
-                    }
-            } catch (e: Exception) {
-                Log.e("Appointments", "Exception", e)
-                _appointments.value = emptyList()
-            }
+    fun convertDbDateToAppFormat(dbDate: String): String {
+        return try {
+            val parts = dbDate.split(".")
+            // Преобразуем "23.05.2025" в "2025-05-23"
+            "${parts[2]}-${parts[1]}-${parts[0]}"
+        } catch (e: Exception) {
+            Log.e("DateConvert", "Error converting date: $dbDate", e)
+            dbDate // Возвращаем как есть в случае ошибки
         }
     }
 

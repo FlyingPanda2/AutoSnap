@@ -8,7 +8,7 @@ data class Appointment(
     val clientId: String = "",
     val carId: String = "",
     val serviceIds: List<String> = emptyList(),
-    val date: String = "",
+    var date: String = "",
     val time: String = "",
     val totalPrice: Int = 0,
     val discountPercent: Int = 0,

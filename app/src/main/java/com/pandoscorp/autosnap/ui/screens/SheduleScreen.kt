@@ -22,8 +22,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.pandoscorp.autosnap.model.Appointment
 import com.pandoscorp.autosnap.model.Car
@@ -59,6 +62,7 @@ import com.pandoscorp.autosnap.navigation.ScreenObject
 import com.pandoscorp.autosnap.ui.viewmodel.AppointmentSharedViewModel
 import com.pandoscorp.autosnap.ui.viewmodel.CalendarView
 import com.pandoscorp.autosnap.ui.viewmodel.getMonthName
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -183,132 +187,122 @@ fun AppointmentCard(
     var car by remember { mutableStateOf<Car?>(null) }
     var services by remember { mutableStateOf<List<Service>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    var isServiceCenterAppointment by remember {
+        mutableStateOf(appointment.serviceCenterId.isNotEmpty())
+    }
 
     LaunchedEffect(appointment) {
-        client = viewModel.getClientById(appointment.clientId)
-        car = viewModel.getCarById(appointment.clientId, appointment.carId)
-        loading = false
-        services = viewModel.getServicesByIds(appointment.serviceIds)
+        viewModel.viewModelScope.launch {
+            client = viewModel.loadAppointmentClient(appointment.id)
+            car = viewModel.loadAppointmentCar(appointment.id)
+            services = viewModel.getServicesByIds(appointment.serviceIds)
+            loading = false
+        }
     }
 
-    // Внешний Box для выхода за пределы Card
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isServiceCenterAppointment)
+                MaterialTheme.colorScheme.surfaceVariant
+            else
+                MaterialTheme.colorScheme.surface
+        )
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(),
-            colors = CardColors(containerColor = Color.Gray, contentColor = Color.White, disabledContentColor = Color.Gray, disabledContainerColor = Color.Gray),
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    if (loading) {
-                        CircularProgressIndicator()
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = appointment.time,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "${appointment.totalPrice} ₽",
-                                color = Color.Green,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                client?.let {
-                                    Text(
-                                        text = "${it.name} ${it.surname}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Text(
-                                        text = it.phone,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                } ?: Text("Клиент не найден")
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "${car?.brand} ${car?.model} ${car?.year}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-
-                            Column {
-                                if (services.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    services.forEach { service ->
-                                        Text(
-                                            text = "- ${service.name}",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                } else {
-                                    Text("Нет услуг")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Крестик теперь вне Card и не будет обрезан
-        IconButton(
-            onClick = { showDeleteDialog = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 8.dp, y = (-8).dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = "Удалить запись",
-                tint = Color.Red,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Удаление записи") },
-            text = { Text("Вы уверены, что хотите удалить эту запись?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteAppointment(
-                            appointment.id,
-                            onSuccess = { showDeleteDialog = false },
-                            onError = { /* Обработка ошибки */ }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (loading) {
+                    CircularProgressIndicator()
+                } else {
+                    // Заголовок с временем и ценой
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = appointment.time,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "${appointment.totalPrice} ₽",
+                            color = Color.Green,
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
-                ) {
-                    Text("Удалить", color = Color.Red)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
-                    Text("Отмена")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Информация о клиенте
+                    Column {
+                        client?.let {
+                            Text(
+                                text = "${it.name} ${it.surname}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = it.phone,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        } ?: Text("Клиент не найден")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Информация об автомобиле
+                    car?.let {
+                        Text(
+                            text = "${it.brand} ${it.model} (${it.year})",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } ?: Text("Автомобиль не найден")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Список услуг
+                    if (services.isNotEmpty()) {
+                        Text("Услуги:", style = MaterialTheme.typography.labelMedium)
+                        services.forEach { service ->
+                            Text("- ${service.name} (${service.duration} мин)",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             }
-        )
+
+            // Уменьшенные кнопки для сервисных записей
+            if (isServiceCenterAppointment && !loading) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Green,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .height(36.dp) // Уменьшаем высоту
+                    ) {
+                        Text("Принять", fontSize = 12.sp) // Уменьшаем текст
+                    }
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.height(36.dp) // Уменьшаем высоту
+                    ) {
+                        Text("Отклонить", fontSize = 12.sp) // Уменьшаем текст
+                    }
+                }
+            }
+        }
     }
 }
