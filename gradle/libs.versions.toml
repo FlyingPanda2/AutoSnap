@@ -1,5 +1,5 @@
 [versions]
-agp = "8.6.1"
+agp = "8.10.1"
 kotlin = "1.9.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -12,13 +12,14 @@ navigationRuntimeKtx = "2.8.5"
 navigationCompose = "2.8.5"
 gms_version = "4.3.15"
 firebase-bom = "32.2.0"
-firebaseDatabaseKtx = "21.0.0"
 volley = "1.2.1"
 runner = "1.6.1"
 coil = "2.4.0"
+lottie = "6.3.0"
 
 [libraries]
 
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx"}
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }

@@ -1,6 +1,6 @@
 ﻿package com.pandoscorp.autosnap.utilis
 
-import com.pandoscorp.autosnap.model.SimpleDate
+import com.pandoscorp.autosnap.domain.model.SimpleDate
 import java.util.Calendar
 
 object DateUtils {
